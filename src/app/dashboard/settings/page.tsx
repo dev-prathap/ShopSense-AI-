@@ -30,7 +30,8 @@ async function saveSettings(formData: FormData) {
 export default async function SettingsPage({ searchParams }: { searchParams: { storeId?: string } }) {
   const storeId = searchParams.storeId || "demo-store";
   const store = await prisma.store.findUnique({ where: { id: storeId } });
-  const appHost = process.env.SHOPIFY_APP_URL || "http://localhost:3000";
+  const appHost = process.env.SHOPIFY_APP_URL || 
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
   const snippet = `<script>
 window.__AI_SALES_AGENT__ = {
   storeId: "${storeId}",

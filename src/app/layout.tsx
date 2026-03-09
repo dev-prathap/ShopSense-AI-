@@ -18,13 +18,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{
             __html: `
               if (window.self === window.top) {
+                const host = window.location.origin;
                 window.__AI_SALES_AGENT__ = {
                   storeId: "cmmjno09c0000nf1n86uueagn",
-                  host: "http://localhost:3000",
+                  host: host,
                   position: "right"
                 };
                 const s = document.createElement('script');
-                s.src = 'http://localhost:3000/widget.js';
+                s.src = host + '/widget.js';
                 s.defer = true;
                 document.body.appendChild(s);
               }
