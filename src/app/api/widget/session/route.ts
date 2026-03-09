@@ -16,9 +16,22 @@ function isAllowedOrigin(input: { origin: string | null; shopDomain: string }) {
   try {
     const url = new URL(input.origin);
     const host = url.hostname.toLowerCase();
+    
+    // Core allowed origins
     if (host === "localhost" || host === "127.0.0.1") return true;
     if (host === input.shopDomain.toLowerCase()) return true;
     if (host.endsWith(".myshopify.com")) return true;
+    
+    // Allow the app's own deployment (for demo/dashboard)
+    const appUrl = process.env.SHOPIFY_APP_URL;
+    if (appUrl) {
+      const appHost = new URL(appUrl).hostname.toLowerCase();
+      if (host === appHost) return true;
+    }
+    
+    // Vercel preview/deployment domains
+    if (host.endsWith(".vercel.app")) return true;
+
     return false;
   } catch {
     return false;
