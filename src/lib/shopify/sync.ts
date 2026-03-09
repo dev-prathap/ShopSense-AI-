@@ -6,6 +6,7 @@ import crypto from "crypto";
 
 type ProductNode = {
   id: string;
+  handle: string;
   title: string;
   description: string;
   tags: string[];
@@ -50,6 +51,7 @@ export async function syncCatalog(storeId: string): Promise<{ synced: number; em
             cursor
             node {
               id
+              handle
               title
               description
               tags
@@ -108,6 +110,7 @@ export async function syncCatalog(storeId: string): Promise<{ synced: number; em
         }
       },
       update: {
+        handle: product.handle,
         title: product.title,
         description: product.description,
         category: product.productType || null,
@@ -123,6 +126,7 @@ export async function syncCatalog(storeId: string): Promise<{ synced: number; em
       create: {
         storeId,
         shopifyId: product.id,
+        handle: product.handle,
         title: product.title,
         description: product.description,
         category: product.productType || null,

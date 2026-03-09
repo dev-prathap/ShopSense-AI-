@@ -92,6 +92,7 @@ model Product {
   id             String            @id @default(cuid())
   storeId        String
   shopifyId      String
+  handle         String?
   title          String
   description    String
   category       String?
@@ -109,6 +110,7 @@ model Product {
 
   @@unique([storeId, shopifyId])
   @@index([storeId, inStock])
+  @@index([storeId, handle])
 }
 
 model ProductVariant {

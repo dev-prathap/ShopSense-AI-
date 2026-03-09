@@ -17,6 +17,7 @@ export interface ChatInput {
 
 export interface ProductHit {
   id: string;
+  url?: string;
   title: string;
   description: string;
   price: number;

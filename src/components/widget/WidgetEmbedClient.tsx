@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 
 type Product = {
   id: string;
+  url?: string;
   title: string;
   price: number;
   currency: string;
@@ -285,22 +286,25 @@ export default function WidgetEmbedClient({ storeId, embedded = false }: Props) 
                       {msg.products.map((p) => (
                         <div 
                           key={p.id}
-                          className="flex w-48 shrink-0 flex-col rounded-xl border border-slate-200 bg-white p-2 shadow-sm transition-all hover:border-primary/50"
+                          onClick={() => p.url && window.open(p.url, '_blank')}
+                          className="flex w-48 shrink-0 flex-col rounded-xl border border-slate-200 bg-white p-2 shadow-sm transition-all hover:border-primary/50 hover:shadow-md cursor-pointer group"
                         >
                           <div className="relative h-32 w-full overflow-hidden rounded-lg bg-slate-100">
                             {p.imageUrl ? (
-                              <img src={p.imageUrl} alt={p.title} className="h-full w-full object-cover" />
+                              <img src={p.imageUrl} alt={p.title} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
                             ) : (
-                              <div className="flex h-full w-full items-center justify-center text-slate-300">
+                              <div className="flex h-full w-full items-center justify-center text-slate-200 group-hover:text-primary/20 transition-colors">
                                 <ShoppingBag className="h-8 w-8" />
                               </div>
                             )}
                           </div>
                           <div className="mt-2 space-y-1">
-                            <p className="line-clamp-1 text-xs font-bold text-slate-900">{p.title}</p>
+                            <p className="line-clamp-1 text-xs font-bold text-slate-900 group-hover:text-primary transition-colors">{p.title}</p>
                             <p className="text-[10px] font-black text-emerald-600">{p.currency} {p.price}</p>
+                            <p className="text-[9px] text-slate-400 line-clamp-1 italic">{p.reason}</p>
                             <button className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-slate-900 py-1.5 text-[10px] font-bold text-white hover:bg-slate-800 transition-colors">
                               View Product
+                              <ExternalLink className="h-3 w-3" />
                             </button>
                           </div>
                         </div>

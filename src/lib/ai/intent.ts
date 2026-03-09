@@ -14,8 +14,8 @@ export async function classifyIntent(text: string): Promise<{ intent: ChatIntent
         {
           role: "system",
           content: `Classify the following user message into ONE of these intents: 
-          - product_discovery (searching for things to buy, "what do you have", "show me")
-          - product_question (specific specs, size, material)
+          - product_discovery (searching for things to buy, "what do you have", "show me", "you have", "best products", "cheapest", "available items")
+          - product_question (specific specs, size, material, "does this have", "how big")
           - shipping_policy (delivery time, where do you ship)
           - order_tracking (where is my order, status)
           - returns_policy (how to return, refund process)

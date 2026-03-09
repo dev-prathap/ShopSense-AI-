@@ -39,6 +39,7 @@ export async function queryProductSimilarity(input: {
   if (typeof input.budget === "number") {
     return prisma.$queryRawUnsafe<Array<{
       id: string;
+      handle: string | null;
       title: string;
       description: string;
       price: number;
@@ -47,7 +48,7 @@ export async function queryProductSimilarity(input: {
       similarity: number;
     }>>(
       `
-      SELECT p."id", p."title", p."description", p."price", p."currency", p."inStock",
+      SELECT p."id", p."handle", p."title", p."description", p."price", p."currency", p."inStock",
       (1 - (pe."embedding" <=> $1::vector)) AS similarity
       FROM "ProductEmbedding" pe
       JOIN "Product" p ON p."id" = pe."productId"
@@ -64,6 +65,7 @@ export async function queryProductSimilarity(input: {
 
   return prisma.$queryRawUnsafe<Array<{
     id: string;
+    handle: string | null;
     title: string;
     description: string;
     price: number;
@@ -72,7 +74,7 @@ export async function queryProductSimilarity(input: {
     similarity: number;
   }>>(
     `
-    SELECT p."id", p."title", p."description", p."price", p."currency", p."inStock",
+    SELECT p."id", p."handle", p."title", p."description", p."price", p."currency", p."inStock",
     (1 - (pe."embedding" <=> $1::vector)) AS similarity
     FROM "ProductEmbedding" pe
     JOIN "Product" p ON p."id" = pe."productId"

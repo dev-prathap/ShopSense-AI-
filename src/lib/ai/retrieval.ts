@@ -4,6 +4,7 @@ import { queryKnowledgeSimilarity, queryProductSimilarity } from "@/lib/db/vecto
 
 interface RetrievedProduct {
   id: string;
+  handle: string | null;
   title: string;
   description: string;
   price: number;
@@ -35,11 +36,11 @@ function keywordScore(input: { text: string; tags: string[]; keywords: string[] 
   let score = 0;
   for (const keyword of input.keywords) {
     if (haystack.includes(keyword)) {
-      score += 0.08;
+      score += 0.15; // Increased boost weight
     }
   }
 
-  return Math.min(0.35, score);
+  return Math.min(0.5, score); // Increased limit
 }
 
 function parseBudget(message: string): number | null {
@@ -50,6 +51,10 @@ function parseBudget(message: string): number | null {
 export async function retrieveProductsForQuery(storeId: string, message: string): Promise<RetrievedProduct[]> {
   const budget = parseBudget(message);
   const keywords = extractKeywords(message);
+  const isCheapRequest = /cheap|lowest|low price/i.test(message);
+  const isBroadRequest = message.length < 25 || /best|top|all|any|show|available/i.test(message);
+
+  let results: RetrievedProduct[] = [];
 
   if (process.env.OPENAI_API_KEY) {
     try {
@@ -59,63 +64,70 @@ export async function retrieveProductsForQuery(storeId: string, message: string)
           storeId,
           embedding,
           budget,
-          limit: 12
+          limit: 15
         });
 
         if (vectorRows.length > 0) {
-          return vectorRows
-            .map((item) => {
-              const baseSimilarity = Number(item.similarity);
-              const text = `${item.title} ${item.description}`;
-              const boosted = Math.min(
-                0.99,
-                baseSimilarity + keywordScore({ text, tags: [], keywords }) + (budget && Number(item.price) <= budget ? 0.04 : 0)
-              );
+          results = vectorRows.map((item) => {
+            const baseSimilarity = Number(item.similarity);
+            const text = `${item.title} ${item.description}`;
+            const boosted = Math.min(
+              0.99,
+              baseSimilarity + keywordScore({ text, tags: [], keywords }) + (budget && Number(item.price) <= budget ? 0.04 : 0)
+            );
 
-              return {
-                id: item.id,
-                title: item.title,
-                description: item.description,
-                price: Number(item.price),
-                currency: item.currency,
-                inStock: item.inStock,
-                similarity: boosted
-              };
-            })
-            .sort((a, b) => b.similarity - a.similarity);
+            return {
+              id: item.id,
+              handle: (item as any).handle,
+              title: item.title,
+              description: item.description,
+              price: Number(item.price),
+              currency: item.currency,
+              inStock: item.inStock,
+              similarity: boosted
+            };
+          });
         }
       }
     } catch {
-      // Falls back to metadata query for resilience when embedding/vector path fails.
+      // Resilience fallback
     }
   }
 
-  const items = await prisma.product.findMany({
-    where: {
-      storeId,
-      inStock: true,
-      ...(budget ? { price: { lte: budget } } : {})
-    },
-    take: 12,
-    orderBy: {
-      updatedAt: "desc"
-    }
-  });
+  // If vector search failed or nothing found, use Prisma fallback
+  if (results.length === 0) {
+    const items = await prisma.product.findMany({
+      where: {
+        storeId,
+        inStock: true,
+        ...(budget ? { price: { lte: budget } } : {})
+      },
+      take: 12,
+      orderBy: { updatedAt: "desc" }
+    });
 
-  return items.map((item, index) => ({
-    id: item.id,
-    title: item.title,
-    description: item.description,
-    price: Number(item.price),
-    currency: item.currency,
-    inStock: item.inStock,
-    similarity: Math.min(
-      0.99,
-      Math.max(0.5, 0.95 - index * 0.05) +
-        keywordScore({ text: `${item.title} ${item.description}`, tags: item.tags, keywords }) +
-        (budget && Number(item.price) <= budget ? 0.04 : 0)
-    )
-  })).sort((a, b) => b.similarity - a.similarity);
+    results = items.map((item, index) => ({
+      id: item.id,
+      handle: (item as any).handle || null,
+      title: item.title,
+      description: item.description,
+      price: Number(item.price),
+      currency: item.currency,
+      inStock: item.inStock,
+      similarity: Math.min(
+        0.99,
+        Math.max(isBroadRequest ? 0.55 : 0.45, 0.95 - index * 0.05) + // Higher base for broad requests
+          keywordScore({ text: `${item.title} ${item.description}`, tags: item.tags, keywords })
+      )
+    }));
+  }
+
+  // Final Sorting logic for "Cheapest" or "Best"
+  if (isCheapRequest) {
+    return results.sort((a, b) => a.price - b.price);
+  }
+
+  return results.sort((a, b) => b.similarity - a.similarity);
 }
 
 export async function retrieveKnowledgeForQuery(storeId: string, message: string): Promise<RetrievedKnowledge[]> {
