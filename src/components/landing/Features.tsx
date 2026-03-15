@@ -6,7 +6,7 @@ export function Features() {
   const fadeUp = {
     hidden: { opacity: 0, y: 40 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: "easeOut" } }
-  };
+  } as const;
 
   return (
     <section className="py-32 px-4 sm:px-6 lg:px-8 max-w-[1200px] mx-auto space-y-40">
