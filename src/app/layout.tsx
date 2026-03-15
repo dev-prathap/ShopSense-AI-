@@ -3,8 +3,38 @@ import "./globals.css";
 import Script from "next/script";
 
 export const metadata: Metadata = {
-  title: "AI Sales Agent for Shopify",
-  description: "Conversion-focused AI sales assistant for Shopify stores."
+  title: "Neryn | AI Sales Agent for High-Growth Brands",
+  description: "Neryn is a conversion-focused AI sales assistant that lives on your storefront, boosts sales, and provides 24/7 support automatically.",
+  metadataBase: new URL("https://neryn.pro"),
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "Neryn | AI Sales Agent for High-Growth Brands",
+    description: "Automate your storefront sales with Neryn's intelligent AI agents. Boost conversions and support customers 24/7.",
+    url: "https://neryn.pro",
+    siteName: "Neryn",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Neryn AI Sales Agent",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Neryn | AI Sales Agent for High-Growth Brands",
+    description: "Automate your storefront sales with Neryn's intelligent AI agents.",
+    images: ["/og-image.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

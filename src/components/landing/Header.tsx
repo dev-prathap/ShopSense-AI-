@@ -33,7 +33,7 @@ export function Header() {
               <div className={`w-2.5 h-2.5 rounded-[2px] transition-colors bg-blue-600`} />
             </div>
           </div>
-          <span className="font-extrabold text-[20px] tracking-tight text-slate-900">ShopSense AI</span>
+          <span className="font-extrabold text-[20px] tracking-tight text-slate-900">Neryn</span>
         </a>
 
         <nav className="hidden md:flex items-center gap-10 text-[15px] font-semibold">

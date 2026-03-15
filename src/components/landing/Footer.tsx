@@ -20,10 +20,10 @@ export function Footer() {
                   <div className="w-2.5 h-2.5 bg-black rounded-[2px]" />
                 </div>
               </div>
-              <span className="font-extrabold text-[22px] tracking-tight text-slate-900">Chatassist</span>
+              <span className="font-extrabold text-[22px] tracking-tight text-slate-900">Neryn</span>
             </div>
             <p className="text-[14px] text-slate-500 font-medium mb-8 max-w-xs leading-relaxed">
-              Empowering enterprise teams with secure, intelligent data automation and analytics.
+              Convert every visitor into a customer with Neryn's conversion-focused AI assistants.
             </p>
             
             {/* Social Icons (Placeholders) */}
@@ -78,7 +78,7 @@ export function Footer() {
         {/* Bottom Section */}
         <div className="pt-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-[13px] text-slate-500 font-medium">
-                © 2026 Chatassist. All rights reserved.
+                © 2026 Neryn. All rights reserved.
             </div>
             <button 
                 onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
