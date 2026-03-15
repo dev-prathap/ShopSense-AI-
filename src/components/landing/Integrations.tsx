@@ -37,7 +37,7 @@ export function Integrations() {
           Integrate with your data stack
         </motion.h2>
         <p className="text-xl text-slate-500 font-medium max-w-2xl mx-auto mb-10">
-          Seamlessly connect our ShopSense AI models to your existing data infrastructure.
+          Seamlessly connect our Neryn AI models to your existing data infrastructure.
         </p>
         <div className="flex flex-wrap justify-center gap-4 md:gap-8 mb-4">
           {["Data Warehouses", "Internal APIs", "Vector Databases", "Identity Providers"].map((tool, i) => (

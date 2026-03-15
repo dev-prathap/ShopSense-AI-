@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { validateStoreAccess } from "@/lib/auth/store-access";
 import { prisma } from "@/lib/db/prisma";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { AppShell } from "@/components/app/AppShell";
 import { PageHeader } from "@/components/app/PageHeader";
 import { Textarea } from "@/components/ui/textarea";
+import { SyncButton } from "@/components/app/SyncButton";
 
 async function saveSettings(formData: FormData) {
   "use server";
@@ -28,7 +30,7 @@ async function saveSettings(formData: FormData) {
 }
 
 export default async function SettingsPage({ searchParams }: { searchParams: { storeId?: string } }) {
-  const storeId = searchParams.storeId || "demo-store";
+  const { storeId } = await validateStoreAccess(searchParams.storeId);
   const store = await prisma.store.findUnique({ where: { id: storeId } });
   const appHost = process.env.SHOPIFY_APP_URL || 
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
@@ -162,15 +164,18 @@ window.__AI_SALES_AGENT__ = {
                 </Button>
                 
                 <div className="mt-8 pt-6 border-t border-white/[0.05]">
-                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3">Sync Status</p>
-                   <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl p-3">
-                       <div className="w-8 h-8 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
-                           <div className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
-                       </div>
-                       <div>
-                           <p className="text-[13px] font-bold text-indigo-100">Awaiting Signal</p>
-                           <p className="text-[11px] font-medium text-slate-400">Waiting for first widget load...</p>
-                       </div>
+                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3">Catalog Management</p>
+                   <div className="space-y-3">
+                     <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl p-3">
+                         <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
+                             <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                         </div>
+                         <div className="flex-1">
+                             <p className="text-[13px] font-bold text-emerald-100">Products Indexed</p>
+                             <p className="text-[11px] font-medium text-slate-400">Sync your catalog for AI recommendations</p>
+                         </div>
+                     </div>
+                     <SyncButton storeId={storeId} />
                    </div>
                 </div>
               </CardContent>

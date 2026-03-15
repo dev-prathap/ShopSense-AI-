@@ -53,7 +53,10 @@ export default async function DashboardPage({
       store: {
         select: {
           id: true,
-          onboardingCompletedAt: true
+          onboardingCompletedAt: true,
+          billingSubscription: {
+            select: { active: true }
+          }
         }
       }
     },
@@ -65,9 +68,19 @@ export default async function DashboardPage({
   }
 
   const mappedStoreId = memberships[0].store.id;
-  const storeId = searchParams.storeId || mappedStoreId;
-  if (!memberships[0].store.onboardingCompletedAt) {
-    redirect(`/dashboard/onboarding?storeId=${storeId}`);
+  const requestedStoreId = searchParams.storeId || mappedStoreId;
+  const currentMembership = memberships.find(m => m.store.id === requestedStoreId);
+  
+  if (!currentMembership) {
+    redirect(`/dashboard?storeId=${mappedStoreId}`);
+  }
+
+  const storeId = requestedStoreId;
+  const storeData = currentMembership.store;
+
+  // Strict Enforce: Must have completed onboarding AND have an active subscription
+  if (!storeData.onboardingCompletedAt || !storeData.billingSubscription?.active) {
+    redirect(`/dashboard/wizard?storeId=${storeId}`);
   }
 
   const data = await fetchDashboardData(storeId);

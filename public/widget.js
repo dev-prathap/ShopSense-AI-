@@ -1,7 +1,30 @@
 (function () {
   var cfg = window.__AI_SALES_AGENT__ || {};
+  
+  // Auto-detect storeId and host from script URL if not manually configured
+  if (!cfg.storeId) {
+    var script = document.currentScript;
+    if (!script) {
+      var scripts = document.getElementsByTagName('script');
+      for (var i = 0; i < scripts.length; i++) {
+        if (scripts[i].src && scripts[i].src.indexOf('widget.js') !== -1) {
+          script = scripts[i];
+          break;
+        }
+      }
+    }
+    if (script && script.src) {
+      var sidMatch = script.src.match(/[?&]storeId=([^&]+)/);
+      if (sidMatch) cfg.storeId = sidMatch[1];
+      if (!cfg.host) {
+        var urlParts = script.src.split('/');
+        cfg.host = urlParts[0] + '//' + urlParts[2];
+      }
+    }
+  }
+
   if (!cfg.storeId || !cfg.host) {
-    console.error("AI Sales Agent: missing storeId or host in window.__AI_SALES_AGENT__");
+    console.error("Neryn AI: missing storeId or host in window.__AI_SALES_AGENT__ or script params");
     return;
   }
 

@@ -58,6 +58,7 @@ model AppUser {
   createdAt    DateTime                 @default(now())
   updatedAt    DateTime                 @updatedAt
   memberships  AppUserStoreMembership[]
+  passwordResetToken PasswordResetToken?
 }
 
 model AppUserStoreMembership {
@@ -92,7 +93,6 @@ model Product {
   id             String            @id @default(cuid())
   storeId        String
   shopifyId      String
-  handle         String?
   title          String
   description    String
   category       String?
@@ -104,6 +104,7 @@ model Product {
   metadata       Json?
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
+  handle         String?
   store          Store             @relation(fields: [storeId], references: [id], onDelete: Cascade)
   embeddings     ProductEmbedding?
   variants       ProductVariant[]
@@ -369,4 +370,13 @@ enum KnowledgeSourceStatus {
 enum UserRole {
   OWNER
   STAFF
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      AppUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

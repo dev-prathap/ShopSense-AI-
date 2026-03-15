@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { validateStoreAccess } from "@/lib/auth/store-access";
 import { prisma } from "@/lib/db/prisma";
 import { notFound, redirect } from "next/navigation";
 import { AppShell } from "@/components/app/AppShell";
@@ -44,14 +45,14 @@ async function resolveConversation(formData: FormData) {
   redirect(`/dashboard/inbox?storeId=${storeId}`);
 }
 
-export default async function ConversationDetailPage({ 
-  params, 
-  searchParams 
-}: { 
-  params: { id: string }; 
-  searchParams: { storeId?: string } 
+export default async function ConversationDetailPage({
+  params,
+  searchParams
+}: {
+  params: { id: string };
+  searchParams: { storeId?: string }
 }) {
-  const storeId = searchParams.storeId || "demo-store";
+  const { storeId } = await validateStoreAccess(searchParams.storeId);
   
   const conversation = await prisma.conversation.findUnique({
     where: { id: params.id, storeId },

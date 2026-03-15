@@ -8,7 +8,7 @@ export function FAQ() {
 
   const faqs = [
     {
-      q: "How does the ShopSense AI integrate with our existing systems?",
+      q: "How does the Neryn AI integrate with our existing systems?",
       a: "Our platform offers out-of-the-box connectors for major CRMs, ERPs, and databases, along with a robust REST API and GraphQL endpoints for custom system integration."
     },
     { 

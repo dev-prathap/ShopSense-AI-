@@ -47,7 +47,7 @@ export function AppShell({
             <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-600/20">
               <Sparkles className="text-white" size={16} fill="currentColor" />
             </div>
-            <span className="text-slate-900 font-bold tracking-tight text-[17px]">ShopSense</span>
+            <span className="text-slate-900 font-bold tracking-tight text-[17px]">Neryn</span>
           </div>
 
           {/* Navigation - Minimalist */}

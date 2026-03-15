@@ -28,8 +28,7 @@ export async function createCreemCheckout(params: CreemCheckoutParams) {
   });
 
   const rawText = await res.text();
-  console.log("Creem API Raw Response:", rawText);
-  
+
   let data;
   try {
     data = JSON.parse(rawText);

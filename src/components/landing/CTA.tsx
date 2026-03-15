@@ -10,7 +10,7 @@ export function CTA() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.7 }}
-        className="bg-gradient-to-r from-blue-600 via-blue-700 to-[#1e3a8a] rounded-[48px] p-10 md:p-20 flex flex-col md:flex-row items-center justify-between gap-12 overflow-hidden relative shadow-2xl shadow-blue-500/20"
+        className="bg-linear-to-r from-blue-600 via-blue-700 to-[#1e3a8a] rounded-[48px] p-10 md:p-20 flex flex-col md:flex-row items-center justify-between gap-12 overflow-hidden relative shadow-2xl shadow-blue-500/20"
       >
         
         {/* Background Grid */}
@@ -22,20 +22,21 @@ export function CTA() {
             initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}
             className="text-4xl md:text-5xl lg:text-[56px] font-bold text-white mb-6 leading-[1.1]"
           >
-            Ready to deploy ShopSense AI?
+            Ready to scale your store?
           </motion.h2>
           <motion.p 
             initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}
             className="text-[18px] text-white/80 font-medium mb-10 max-w-sm leading-relaxed"
           >
-            Transform your workflows with secure, intelligent agents designed for modern enterprise teams.
+            Join 450+ Shopify brands using Neryn AI to automate sales and support.
           </motion.p>
           <motion.button 
             initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
             whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+            onClick={() => window.location.href = '/signup'}
             className="group flex items-center gap-3 bg-white hover:bg-slate-50 text-slate-900 px-8 py-4 rounded-full text-[15px] font-bold transition-all shadow-xl"
           >
-            Contact Sales
+            Start 7-Day Free Trial
             <span className="bg-slate-900 text-white p-1.5 rounded-full flex items-center justify-center transition-transform group-hover:translate-x-1">
                 <ArrowRight size={14} className="-rotate-45" strokeWidth={3} />
             </span>
@@ -47,7 +48,7 @@ export function CTA() {
           initial={{ opacity: 0, y: 100 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
           className="md:w-5/12 w-full flex justify-end relative z-10 translate-y-12 md:translate-y-24"
         >
-          <div className="w-[320px] h-[600px] bg-white rounded-[48px] shadow-2xl p-3.5 border-[8px] border-slate-900 flex flex-col group cursor-pointer hover:-translate-y-4 transition-transform duration-500">
+          <div className="w-[320px] h-[600px] bg-white rounded-[48px] shadow-2xl p-3.5 border-8 border-slate-900 flex flex-col group cursor-pointer hover:-translate-y-4 transition-transform duration-500">
             {/* Phone Notch */}
             <div className="w-32 h-7 bg-slate-900 absolute top-0 left-1/2 -translate-x-1/2 rounded-b-3xl z-20"></div>
             

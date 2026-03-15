@@ -2,6 +2,7 @@ import "server-only";
 
 import { prisma } from "@/lib/db/prisma";
 import { enqueueRetryJob } from "@/lib/jobs/queue";
+import { sendEmail, generateHandoffEmail } from "@/lib/email/service";
 
 export async function triggerHandoffNotification(input: {
   storeId: string;
@@ -35,8 +36,50 @@ export async function triggerHandoffNotification(input: {
     createdAt: new Date().toISOString()
   };
 
+  // Send email notification if support email is configured
+  let emailSent = false;
+  if (store.supportEmail) {
+    try {
+      const appHost = process.env.SHOPIFY_APP_URL ||
+        (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+      const dashboardUrl = `${appHost}/dashboard/inbox/${input.conversationId}?storeId=${input.storeId}`;
+
+      const emailContent = generateHandoffEmail({
+        storeId: input.storeId,
+        shopDomain: store.shopDomain || 'Unknown Store',
+        conversationId: input.conversationId,
+        visitorId: input.visitorId,
+        handoffReason: input.reason || 'Unknown reason',
+        latestUserMessage: input.latestUserMessage,
+        dashboardUrl
+      });
+
+      const emailResult = await sendEmail({
+        to: store.supportEmail,
+        subject: emailContent.subject,
+        html: emailContent.html,
+        text: emailContent.text
+      });
+
+      emailSent = emailResult.sent;
+      if (!emailResult.sent) {
+        console.error('Failed to send handoff email:', emailResult.error);
+      }
+    } catch (error) {
+      console.error('Error sending handoff email:', error);
+    }
+  }
+
+  // If no webhook is configured but we sent an email, that's still success
   if (!store.handoffWebhookUrl) {
-    return { sent: false, reason: "handoff_webhook_not_configured" as const };
+    if (emailSent) {
+      await prisma.conversation.update({
+        where: { id: input.conversationId },
+        data: { handoffNotifiedAt: new Date() }
+      });
+      return { sent: true, reason: "email_sent" as const };
+    }
+    return { sent: false, reason: "no_notification_method_configured" as const };
   }
 
   try {

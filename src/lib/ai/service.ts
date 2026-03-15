@@ -4,10 +4,54 @@ import { retrieveKnowledgeForQuery, retrieveProductsForQuery } from "@/lib/ai/re
 import { prisma } from "@/lib/db/prisma";
 import { ChatInput, ChatOutput } from "@/lib/ai/types";
 
+type StoreSettings = {
+  shopDomain: string | null;
+  businessName: string | null;
+  brandPersona: string | null;
+  brandDescription: string | null;
+  aiTone: string | null;
+  aiMaxRecommendations: number | null;
+  aiHandoffSensitivity: number | null;
+};
+
+type ProductHit = {
+  id: string;
+  url?: string;
+  title: string;
+  description: string;
+  price: number;
+  currency: string;
+  inStock: boolean;
+  reason: string;
+  variantId?: string;
+};
+
+type ProductItem = {
+  id: string;
+  handle?: string;
+  title: string;
+  description: string;
+  price: string | number;
+  currency: string;
+  inStock: boolean;
+  similarity?: number;
+};
+
+type VariantItem = {
+  shopifyVariantId: string;
+  productId: string;
+};
+
+type ChatAction = {
+  type: "add_to_cart";
+  variantId: string;
+  productTitle: string;
+} | undefined;
+
 export async function handleChat(input: ChatInput): Promise<ChatOutput> {
   const { intent, confidence } = await classifyIntent(input.message);
   
-  const storeSettings = await prisma.store.findUnique({
+  const storeSettings: StoreSettings | null = await prisma.store.findUnique({
     where: { id: input.storeId },
     select: {
       shopDomain: true,
@@ -18,7 +62,7 @@ export async function handleChat(input: ChatInput): Promise<ChatOutput> {
       aiMaxRecommendations: true,
       aiHandoffSensitivity: true
     }
-  }) as any;
+  });
 
   const effectiveConfidence = adjustConfidenceBySensitivity(confidence, storeSettings?.aiHandoffSensitivity ?? 50);
 
@@ -50,36 +94,48 @@ export async function handleChat(input: ChatInput): Promise<ChatOutput> {
   
   const maxProducts = storeSettings?.aiMaxRecommendations ?? 3;
 
-  const toProductHit = async (item: any, reason: string) => {
-    // Fetch first variant for cart add functionality
-    const variant = await prisma.productVariant.findFirst({
-      where: { productId: item.id },
-      orderBy: { createdAt: "asc" }
-    });
+  const toProductHit = (item: ProductItem | any, reason: string, variantMap: Map<string, any>): ProductHit => {
+    const variant = variantMap.get(item.id);
+    const shopDomain = storeSettings?.shopDomain || "myshopify.com";
 
     return {
       id: item.id,
-      url: item.handle ? `https://${storeSettings.shopDomain}/products/${item.handle}` : undefined,
+      url: item.handle ? `https://${shopDomain}/products/${item.handle}` : undefined,
       title: item.title,
       description: item.description,
-      price: typeof item.price === "number" ? item.price : Number(item.price),
-      currency: item.currency,
-      inStock: item.inStock,
+      price: typeof item.price === "number" ? item.price : Number(item.price || 0),
+      currency: item.currency || "USD",
+      inStock: !!item.inStock,
       reason,
       variantId: variant?.shopifyVariantId
     };
   };
 
-  let finalProducts: any[] = [];
+  let finalProducts: ProductHit[] = [];
 
   if (showProducts && retrievedProducts.length > 0) {
     const threshold = (intent === "product_question" || intent === "add_to_cart") ? 0.35 : 0;
-    const sorted = (retrievedProducts as any[])
-      .filter(item => item.similarity > threshold)
+    const sorted = (retrievedProducts as ProductItem[])
+      .filter(item => (item.similarity ?? 0) > threshold)
       .slice(0, maxProducts);
-    
-    finalProducts = await Promise.all(
-      sorted.map(item => toProductHit(item, item.similarity > 0.7 ? "Highly relevant to your search" : "Recommended for you"))
+
+    // Batch fetch variants for all products to avoid N+1 queries
+    const productIds = sorted.map(item => item.id);
+    const variants = await prisma.productVariant.findMany({
+      where: { productId: { in: productIds } },
+      orderBy: { createdAt: "asc" },
+    });
+
+    // Create a map of productId -> first variant for quick lookup
+    const variantMap = new Map<string, VariantItem>();
+    variants.forEach(variant => {
+      if (!variantMap.has(variant.productId)) {
+        variantMap.set(variant.productId, variant);
+      }
+    });
+
+    finalProducts = sorted.map(item =>
+      toProductHit(item, (item.similarity ?? 0) > 0.7 ? "Highly relevant to your search" : "Recommended for you", variantMap)
     );
   }
 
@@ -90,12 +146,27 @@ export async function handleChat(input: ChatInput): Promise<ChatOutput> {
       take: maxProducts,
       orderBy: { updatedAt: "desc" }
     });
-    finalProducts = await Promise.all(
-      fallback.map(p => toProductHit(p, "Featured in our store"))
+
+    // Batch fetch variants for fallback products too
+    const fallbackProductIds = fallback.map(p => p.id);
+    const fallbackVariants = await prisma.productVariant.findMany({
+      where: { productId: { in: fallbackProductIds } },
+      orderBy: { createdAt: "asc" },
+    });
+
+    const fallbackVariantMap = new Map<string, any>();
+    fallbackVariants.forEach(variant => {
+      if (!fallbackVariantMap.has(variant.productId)) {
+        fallbackVariantMap.set(variant.productId, variant);
+      }
+    });
+
+    finalProducts = fallback.map(p =>
+      toProductHit(p, "Featured in our store", fallbackVariantMap)
     );
   }
 
-  let action: any = undefined;
+  let action: ChatAction = undefined;
   if (intent === "add_to_cart" && finalProducts.length > 0) {
     const best = finalProducts[0];
     if (best.variantId) {
@@ -107,7 +178,7 @@ export async function handleChat(input: ChatInput): Promise<ChatOutput> {
     }
   }
 
-  console.log(`[ShopSense] Intent: ${intent} | Final products: ${finalProducts.length}`);
+  console.log(`[Neryn] Intent: ${intent} | Final products: ${finalProducts.length}`);
 
   const missingPolicyKnowledge = (intent === "shipping_policy" || intent === "returns_policy") && 
     !knowledgeHits.some(k => k.similarity > 0.45);

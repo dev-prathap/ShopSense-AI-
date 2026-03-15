@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { Eye, EyeOff } from "lucide-react";
 
@@ -26,10 +28,29 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [googleError, setGoogleError] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   useEffect(() => {
     setGoogleError(window.location.search.includes("error="));
-  }, []);
+
+    // Check if user is already authenticated
+    const checkAuthStatus = async () => {
+      try {
+        const response = await fetch("/api/auth/me");
+        const out = await response.json().catch(() => ({ authenticated: false }));
+        if (response.ok && out.authenticated) {
+          // User is already authenticated, redirect to dashboard
+          router.push("/dashboard");
+          return;
+        }
+      } catch (error) {
+        // User is not authenticated, continue to login
+      }
+      setIsCheckingAuth(false);
+    };
+
+    checkAuthStatus();
+  }, [router]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -51,6 +72,27 @@ export default function LoginPage() {
 
     router.push("/dashboard");
     router.refresh();
+  }
+
+  // Show loading spinner while checking authentication status
+  if (isCheckingAuth) {
+    return (
+      <AuthShell
+        title="Verifying Session"
+        subtitle="Accessing your merchant dashboard, onboarding flow, and sales analytics."
+        sideTitle="Enterprise-grade AI sales operations"
+        sideBody="Secure authentication, Shopify-integrated onboarding, and high-visibility conversion workflows."
+      >
+        <Card className="w-full max-w-md mx-auto">
+          <CardContent className="flex items-center justify-center py-16">
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 border-2 border-blue-600/20 border-t-blue-600 rounded-full animate-spin" />
+              <span className="text-sm text-slate-600">Checking authentication...</span>
+            </div>
+          </CardContent>
+        </Card>
+      </AuthShell>
+    );
   }
 
   return (
@@ -80,6 +122,13 @@ export default function LoginPage() {
             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
         </div>
+
+        <div className="flex items-center justify-between">
+          <Link href="/forgot-password" className="text-sm text-blue-600 hover:text-blue-500">
+            Forgot your password?
+          </Link>
+        </div>
+
         <Button type="submit" className="w-full" disabled={loading}>{loading ? "Signing in..." : "Sign In"}</Button>
       </form>
 

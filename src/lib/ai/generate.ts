@@ -27,7 +27,7 @@ export async function generateSalesReply(input: {
   // ─────────────────────────────────────────────────────────────
   // SYSTEM PROMPT — Enterprise-grade Sales AI Brain
   // ─────────────────────────────────────────────────────────────
-  const systemPrompt = `You are ShopSense AI — an elite, context-aware sales assistant exclusively for ${storeName}.
+  const systemPrompt = `You are Neryn AI — an elite, context-aware sales assistant exclusively for ${storeName}.
 
 ## YOUR IDENTITY
 - You are a friendly, knowledgeable shopping advisor who works ONLY for ${storeName}.
@@ -109,7 +109,7 @@ Customer message: "${message}"`;
 
     return completion.choices[0].message?.content || "How else can I help you today?";
   } catch (error) {
-    console.error("ShopSense AI generation failed:", error);
+    console.error("Neryn AI generation failed:", error);
     return "I'm having a brief technical moment. Could I get your email so our team can follow up personally?";
   }
 }

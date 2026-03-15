@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,12 +13,40 @@ type Product = {
   reason: string;
 };
 
+type StoreInfo = {
+  businessName: string;
+  brandDescription: string;
+  shopDomain: string;
+  supportEmail?: string;
+};
+
 export default function ChatWidget({ token }: { token?: string }) {
   const [message, setMessage] = useState("");
   const [reply, setReply] = useState<string>("");
   const [products, setProducts] = useState<Product[]>([]);
   const [conversationId, setConversationId] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
+  const [storeInfo, setStoreInfo] = useState<StoreInfo | null>(null);
+
+  // Fetch store information on mount
+  useEffect(() => {
+    const fetchStoreInfo = async () => {
+      try {
+        const { searchParams } = new URL(window.location.href);
+        const storeId = searchParams.get("storeId") || "demo-store";
+
+        const response = await fetch(`/api/widget/store-info?storeId=${storeId}`);
+        if (response.ok) {
+          const info = await response.json();
+          setStoreInfo(info);
+        }
+      } catch (error) {
+        console.error("Failed to fetch store info:", error);
+      }
+    };
+
+    fetchStoreInfo();
+  }, []);
 
   async function sendMessage() {
     if (!message.trim()) {
@@ -54,8 +82,17 @@ export default function ChatWidget({ token }: { token?: string }) {
   return (
     <Card className="max-w-xl">
       <CardHeader>
-        <CardTitle>AI Sales Chat</CardTitle>
-        <CardDescription>Ask for products, shipping, returns, and order tracking.</CardDescription>
+        <CardTitle>
+          {storeInfo?.businessName ? `Chat with ${storeInfo.businessName}` : "AI Sales Chat"}
+        </CardTitle>
+        <CardDescription>
+          {storeInfo?.brandDescription || "Ask for products, shipping, returns, and order tracking."}
+        </CardDescription>
+        {storeInfo?.supportEmail && (
+          <div className="text-xs text-muted-foreground">
+            Need human help? Contact: {storeInfo.supportEmail}
+          </div>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex gap-2">

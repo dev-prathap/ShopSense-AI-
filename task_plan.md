@@ -1,4 +1,4 @@
-# ShopSense AI Implementation Plan
+# Neryn AI Implementation Plan
 
 ## Phase 1: Merchant Inbox & Human Handoff (COMPLETE)
 

@@ -20,22 +20,22 @@ export function Hero() {
           className="relative z-10 w-full flex flex-col items-center text-center text-slate-900 mb-16"
         >
           <h1 className="text-5xl md:text-[64px] lg:text-[76px] font-bold tracking-tight mb-6 leading-[1.05] max-w-4xl text-slate-900">
-            Instantly Engage Customers<br className="hidden md:block" />with Smart AI Chatbots
+            Automate your Shopify Sales<br className="hidden md:block" />with Neryn AI
           </h1>
 
           <p className="text-lg md:text-[20px] text-slate-600 font-medium max-w-2xl mx-auto mb-10 leading-relaxed">
-            Automate conversations, boost sales, and provide 24/7 support, all with one intelligent chatbot platform.
+            Instantly engage customers, boost conversions, and provided 24/7 intelligent support—no code required.
           </p>
 
           <div className="relative w-full max-w-[420px] mx-auto bg-white/80 backdrop-blur-xl p-1.5 rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.06)] border border-slate-200/80 flex focus-within:ring-4 focus-within:ring-blue-500/10 transition-all">
             <input 
               type="email" 
-              placeholder="Enter your business email" 
+              placeholder="Enter your store email" 
               className="flex-1 bg-transparent px-5 py-3 text-[15px] font-medium text-slate-800 placeholder:text-slate-400 outline-none"
             />
-            <a href="/signup" className="bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold px-6 py-3 rounded-full transition-all shadow-md flex items-center justify-center">
-              Get your AI Agent
-            </a>
+            <button onClick={() => window.location.href = '/signup'} className="bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold px-6 py-3 rounded-full transition-all shadow-md flex items-center justify-center whitespace-nowrap">
+              Launch AI Agent
+            </button>
           </div>
         </motion.div>
 
@@ -79,7 +79,7 @@ export function Hero() {
                 <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center border border-white shadow-sm">
                    <Bot size={16} className="text-blue-600" />
                 </div>
-                <span className="text-[12px] font-bold text-slate-500">ShopSense AI</span>
+                <span className="text-[12px] font-bold text-slate-500">Neryn AI</span>
              </div>
              <div className="bg-white/90 backdrop-blur-xl p-4 md:p-5 rounded-2xl rounded-tl-sm shadow-[0_12px_40px_rgba(0,0,0,0.08)] border border-slate-200/60 max-w-[220px] md:max-w-[260px]">
                 <p className="text-[13px] md:text-[14px] text-slate-700 font-medium leading-relaxed">

@@ -21,7 +21,9 @@ export async function POST(req: NextRequest) {
 
     // Event types usually look like: "checkout.succeeded", "payment.succeeded", etc.
     // Based on common billing webhooks:
-    if (body.type === "checkout.succeeded" || body.type === "payment.succeeded") {
+    // Supported Creem event types
+    const supportedEvents = ["checkout.succeeded", "payment.succeeded", "checkout.completed", "subscription.active"];
+    if (supportedEvents.includes(body.type)) {
       const metadata = body.data?.meta_data || body.data?.metadata || {};
       const storeId = metadata.storeId;
       const externalChargeId = body.data?.id;

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { Eye, EyeOff } from "lucide-react";
 
@@ -26,6 +28,27 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    // Check if user is already authenticated
+    const checkAuthStatus = async () => {
+      try {
+        const response = await fetch("/api/auth/me");
+        const out = await response.json().catch(() => ({ authenticated: false }));
+        if (response.ok && out.authenticated) {
+          // User is already authenticated, redirect to dashboard
+          router.push("/dashboard");
+          return;
+        }
+      } catch (error) {
+        // User is not authenticated, continue to signup
+      }
+      setIsCheckingAuth(false);
+    };
+
+    checkAuthStatus();
+  }, [router]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -47,6 +70,27 @@ export default function SignupPage() {
 
     router.push("/dashboard");
     router.refresh();
+  }
+
+  // Show loading spinner while checking authentication status
+  if (isCheckingAuth) {
+    return (
+      <AuthShell
+        title="Checking Status"
+        subtitle="Please wait while we verify your session..."
+        sideTitle="Setting up your store"
+        sideBody="We are preparing your personalized merchant command center. Just a moment."
+      >
+        <Card className="w-full max-w-md mx-auto">
+          <CardContent className="flex items-center justify-center py-16">
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 border-2 border-blue-600/20 border-t-blue-600 rounded-full animate-spin" />
+              <span className="text-sm text-slate-600">Checking authentication...</span>
+            </div>
+          </CardContent>
+        </Card>
+      </AuthShell>
+    );
   }
 
   return (

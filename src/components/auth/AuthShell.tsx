@@ -10,7 +10,7 @@ export function AuthShell(props: {
 }) {
   return (
     <main className="grid min-h-screen md:grid-cols-2">
-      <section className="relative hidden bg-linear-to-br from-slate-950 via-slate-900 to-teal-900 p-16 text-white md:flex md:flex-col md:justify-between lg:p-24">
+      <section className="relative hidden bg-linear-to-br from-slate-950 via-slate-900 to-indigo-950 p-16 text-white md:flex md:flex-col md:justify-between lg:p-24">
         <div className="space-y-8">
           <Badge className="w-fit bg-white/20 px-4 py-1 text-sm text-white hover:bg-white/20">AI Sales Agent</Badge>
           <div className="space-y-4">

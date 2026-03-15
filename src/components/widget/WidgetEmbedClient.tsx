@@ -234,7 +234,7 @@ export default function WidgetEmbedClient({ storeId, embedded = false }: Props) 
               <Bot className="h-6 w-6 text-white" />
             </div>
             <div>
-              <p className="text-[15px] font-bold tracking-tight leading-none">ShopSense AI</p>
+              <p className="text-[15px] font-bold tracking-tight leading-none">Neryn AI</p>
               <div className="mt-1.5 flex items-center gap-1.5">
                 <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
                 <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest">Active Assistant</p>
@@ -390,7 +390,7 @@ export default function WidgetEmbedClient({ storeId, embedded = false }: Props) 
         <div className="mt-4 flex items-center justify-center gap-2 opacity-30">
             <div className="h-[1px] flex-1 bg-slate-400" />
             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-800">
-                ShopSense AI
+                Neryn AI
             </p>
             <div className="h-[1px] flex-1 bg-slate-400" />
         </div>

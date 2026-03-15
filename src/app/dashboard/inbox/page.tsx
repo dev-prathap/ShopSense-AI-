@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { validateStoreAccess } from "@/lib/auth/store-access";
 import { prisma } from "@/lib/db/prisma";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +9,7 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { EmptyState } from "@/components/app/EmptyState";
 
 export default async function InboxPage({ searchParams }: { searchParams: { storeId?: string } }) {
-  const storeId = searchParams.storeId || "demo-store";
+  const { storeId } = await validateStoreAccess(searchParams.storeId);
 
   const conversations = await prisma.conversation.findMany({
     where: { storeId },

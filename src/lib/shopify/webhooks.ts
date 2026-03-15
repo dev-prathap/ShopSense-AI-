@@ -108,6 +108,7 @@ export async function ensureShopifyWebhooks(input: { shopDomain: string; accessT
     );
 
     if (result.webhookSubscriptionCreate.userErrors.length > 0 || !result.webhookSubscriptionCreate.webhookSubscription) {
+      console.error(`[Shopify] Webhook creation failed for ${topic}:`, JSON.stringify(result.webhookSubscriptionCreate.userErrors));
       errors.push({
         topic,
         message: result.webhookSubscriptionCreate.userErrors[0]?.message || "unknown_webhook_create_error"

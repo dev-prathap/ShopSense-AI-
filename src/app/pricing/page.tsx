@@ -5,7 +5,7 @@ import { CTA } from "@/components/landing/CTA";
 import { Footer } from "@/components/landing/Footer";
 
 export const metadata = {
-  title: "Pricing - ShopSense AI",
+  title: "Pricing - Neryn AI",
   description: "Transparent, predictable pricing for enterprise-grade AI e-commerce tools."
 };
 

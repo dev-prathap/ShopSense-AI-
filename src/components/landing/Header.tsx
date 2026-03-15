@@ -44,8 +44,8 @@ export function Header() {
           <a href="#" className="transition-colors text-slate-700 hover:text-blue-600">Resources</a>
         </nav>
 
-        <button className="hidden md:flex items-center gap-2.5 px-7 py-3.5 rounded-full text-[14px] font-bold transition-all shadow-md hover:scale-105 group bg-[#0f172a] text-white hover:bg-black">
-          Request Demo
+        <button className="hidden md:flex items-center gap-2.5 px-7 py-3.5 rounded-full text-[14px] font-bold transition-all shadow-md hover:scale-105 group bg-[#0f172a] text-white hover:bg-black" onClick={() => window.location.href = '/signup'}>
+          Start Free Trial
           <span className="p-0.5 rounded-full flex items-center justify-center transition-transform group-hover:translate-x-1 bg-white/10 text-white">
               <ArrowRight size={14} className="-rotate-45" strokeWidth={2.5} />
           </span>

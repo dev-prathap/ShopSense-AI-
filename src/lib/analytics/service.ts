@@ -14,8 +14,16 @@ export async function getAnalyticsSnapshot(storeId: string): Promise<AnalyticsSn
   const [conversations, conversions, recommendations, recoveryOffers, topIntents, productAgg, variantCount, ordersCached, knowledgeAgg, knowledgeChunkCount] = await Promise.all([
     prisma.conversation.count({ where: { storeId } }),
     prisma.conversation.count({ where: { storeId, convertedAt: { not: null } } }),
-    prisma.recommendationEvent.findMany({ where: { storeId } }),
-    prisma.recoveryOffer.findMany({ where: { storeId } }),
+    prisma.recommendationEvent.findMany({
+      where: { storeId },
+      take: 1000, // Limit to prevent memory issues
+      orderBy: { createdAt: 'desc' }
+    }),
+    prisma.recoveryOffer.findMany({
+      where: { storeId },
+      take: 1000, // Limit to prevent memory issues
+      orderBy: { offeredAt: 'desc' }
+    }),
     prisma.message.groupBy({
       by: ["intent"],
       where: {

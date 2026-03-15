@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db/prisma";
 import { hashPassword } from "@/lib/auth/password";
 import { setAppSessionCookie, signAppSession } from "@/lib/auth/session";
+import { consumeRateLimit } from "@/lib/security/rate-limit";
 
 const schema = z.object({
   email: z.string().email(),
@@ -11,6 +12,23 @@ const schema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  // Rate limiting for signup attempts - 3 attempts per 30 minutes per IP
+  const clientIP = req.headers.get("x-forwarded-for") ||
+                   req.headers.get("x-real-ip") ||
+                   "unknown";
+  const rateLimitResult = await consumeRateLimit({
+    key: `auth_signup:${clientIP}`,
+    limit: 3,
+    windowMs: 30 * 60 * 1000 // 30 minutes
+  });
+
+  if (!rateLimitResult.allowed) {
+    return NextResponse.json(
+      { error: "Too many signup attempts. Please try again later." },
+      { status: 429 }
+    );
+  }
+
   const parsed = schema.safeParse(await req.json());
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });

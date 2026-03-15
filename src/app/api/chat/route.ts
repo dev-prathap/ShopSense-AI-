@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { Conversation } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { handleChat } from "@/lib/ai/service";
 import { verifyWidgetAccess } from "@/lib/security/guards";
 import { consumeRateLimit } from "@/lib/security/rate-limit";
 import { assertStoreSubscriptionActive } from "@/lib/billing/guard";
 import { triggerHandoffNotification } from "@/lib/handoff/service";
+import { checkUsageLimits, trackMessageUsage } from "@/lib/billing/usage-tracking";
 
 const schema = z.object({
   storeId: z.string().min(1),
@@ -47,34 +49,61 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "rate_limited" }, { status: 429 });
   }
 
-  const conversation =
-    parsed.data.conversationId
-      ? await prisma.conversation.findFirst({
-          where: {
-            id: parsed.data.conversationId,
-            storeId,
-            visitorId
-          }
-        })
-      : await prisma.conversation.create({
+  // Check message usage limits
+  const withinLimits = await checkUsageLimits(storeId);
+  if (!withinLimits) {
+    return NextResponse.json(
+      { error: "Monthly message limit exceeded. Please upgrade your plan." },
+      { status: 402 }
+    );
+  }
+
+  // Handle conversation creation/lookup with race condition protection
+  let conversation: Conversation | null;
+  if (parsed.data.conversationId) {
+    // Find existing conversation by ID
+    conversation = await prisma.conversation.findFirst({
+      where: {
+        id: parsed.data.conversationId,
+        storeId,
+        visitorId
+      }
+    });
+  } else {
+    // For new conversations, first try to find an existing one to prevent duplicates
+    conversation = await prisma.conversation.findFirst({
+      where: { storeId, visitorId }
+    });
+
+    if (!conversation) {
+      // Only create if one doesn't exist
+      try {
+        conversation = await prisma.conversation.create({
           data: {
             storeId,
             visitorId
           }
         });
+      } catch (error: any) {
+        // If creation fails (possibly due to race condition), try to find existing again
+        if (error.code === 'P2002' || error.message?.includes('Unique constraint')) {
+          conversation = await prisma.conversation.findFirst({
+            where: { storeId, visitorId }
+          });
+        }
+
+        if (!conversation) {
+          throw error; // Re-throw if it's not a race condition issue
+        }
+      }
+    }
+  }
 
   if (!conversation) {
     return NextResponse.json({ error: "Conversation not found" }, { status: 404 });
   }
 
-  await prisma.message.create({
-    data: {
-      conversationId: conversation.id,
-      role: "user",
-      content: message
-    }
-  });
-
+  // Process AI chat before database transaction to avoid long-running transactions
   const output = await handleChat({
     storeId,
     visitorId,
@@ -82,7 +111,17 @@ export async function POST(req: NextRequest) {
     message
   });
 
-  await prisma.$transaction([
+  // All database operations in a single transaction for data integrity
+  const [userMessage, assistantMessage] = await prisma.$transaction([
+    // Create user message
+    prisma.message.create({
+      data: {
+        conversationId: conversation.id,
+        role: "user",
+        content: message
+      }
+    }),
+    // Create assistant message
     prisma.message.create({
       data: {
         conversationId: conversation.id,
@@ -113,6 +152,9 @@ export async function POST(req: NextRequest) {
         : {}
     })
   ]);
+
+  // Track message usage for billing
+  await trackMessageUsage(storeId, assistantMessage.id);
 
   if (output.handoff.required && conversation.status !== "HANDOFF_REQUESTED") {
     await triggerHandoffNotification({

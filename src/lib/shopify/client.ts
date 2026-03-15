@@ -25,7 +25,7 @@ export async function shopifyGraphQL<T>(shopDomain: string, accessToken: string,
 }
 
 export function shopifyInstallUrl(shop: string, state: string): string {
-  const scopes = process.env.SHOPIFY_SCOPES || "read_products,read_orders";
+  const scopes = process.env.SHOPIFY_SCOPES || "read_products,read_orders,read_script_tags,write_script_tags";
   const redirectUri = `${process.env.SHOPIFY_APP_URL}/api/shopify/callback`;
   const apiKey = process.env.SHOPIFY_API_KEY;
 
@@ -106,4 +106,46 @@ export async function fetchShopifyOrderStatusByNumber(input: {
   );
 
   return data.orders.edges[0]?.node || null;
+}
+export async function ensureShopifyScriptTag(shopDomain: string, accessToken: string, storeId: string) {
+  const scriptUrl = `${process.env.SHOPIFY_APP_URL}/widget.js?storeId=${storeId}`;
+  
+  try {
+    // 1. Check if already exists to avoid duplicates
+    const checkResponse = await fetch(`https://${shopDomain}/admin/api/${ADMIN_API_VERSION}/script_tags.json`, {
+      headers: { "X-Shopify-Access-Token": accessToken }
+    });
+    
+    if (checkResponse.ok) {
+      const { script_tags } = await checkResponse.json();
+      if (script_tags?.some((s: any) => s.src === scriptUrl)) {
+        console.log(`[Shopify] ScriptTag already exists for ${shopDomain}`);
+        return; 
+      }
+    }
+
+    // 2. Create the script tag
+    const createResponse = await fetch(`https://${shopDomain}/admin/api/${ADMIN_API_VERSION}/script_tags.json`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Shopify-Access-Token": accessToken
+      },
+      body: JSON.stringify({
+        script_tag: {
+          event: "onload",
+          src: scriptUrl
+        }
+      })
+    });
+
+    if (createResponse.ok) {
+      console.log(`[Shopify] ScriptTag installed successfully for ${shopDomain}`);
+    } else {
+      const err = await createResponse.text();
+      console.error(`[Shopify] ScriptTag installation failed: ${err}`);
+    }
+  } catch (error) {
+    console.error("[Shopify] ScriptTag error:", error);
+  }
 }

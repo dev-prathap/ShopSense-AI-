@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { validateStoreAccess } from "@/lib/auth/store-access";
 import { prisma } from "@/lib/db/prisma";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,13 +11,13 @@ import { Check, X, ArrowRight, Zap, Search, LifeBuoy, ShieldCheck } from "lucide
 import { cn } from "@/lib/utils";
 
 export default async function BillingPage({ searchParams }: { searchParams: { storeId?: string, success?: string, canceled?: string } }) {
-  const storeId = searchParams.storeId || "demo-store";
+  const { storeId } = await validateStoreAccess(searchParams.storeId);
   const subscription = await prisma.billingSubscription.findUnique({ where: { storeId } });
 
   const products = [
     {
       id: "shopbot",
-      name: "ShopBot AI",
+      name: "Neryn Bot AI",
       tag: "Sales Bot",
       description: "LLM-powered product discovery and cart assistant embedded on your storefront.",
       price: "$100",
@@ -204,7 +205,7 @@ export default async function BillingPage({ searchParams }: { searchParams: { st
                         </thead>
                         <tbody className="text-[13px] font-medium">
                             <tr className="border-t border-slate-100 bg-indigo-50/20">
-                                <td className="px-6 py-5 font-bold text-indigo-600">ShopBot AI ✦</td>
+                                <td className="px-6 py-5 font-bold text-indigo-600">Neryn Bot AI ✦</td>
                                 <td className="px-6 py-5 text-center font-bold text-slate-900">$100/mo</td>
                                 <td className="px-6 py-5 text-center"><Badge className="bg-emerald-100 text-emerald-700 border-none">GPT-4o Native</Badge></td>
                                 <td className="px-6 py-5 text-center text-emerald-500 font-bold underline decoration-2 underline-offset-4">Included</td>
@@ -245,7 +246,7 @@ export default async function BillingPage({ searchParams }: { searchParams: { st
                 <div className="md:w-1/3">
                     <span className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] mb-2 block">Common Questions</span>
                     <h3 className="text-2xl font-bold tracking-tight text-slate-900">Subscription & Technical FAQ</h3>
-                    <p className="text-sm text-slate-500 mt-2">Everything you need to know about the ShopSense product stack.</p>
+                    <p className="text-sm text-slate-500 mt-2">Everything you need to know about the Neryn product stack.</p>
                 </div>
                 <div className="md:w-2/3 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                     <div>

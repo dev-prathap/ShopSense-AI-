@@ -1,3 +1,4 @@
+import { validateStoreAccess } from "@/lib/auth/store-access";
 import { prisma } from "@/lib/db/prisma";
 import { AppShell } from "@/components/app/AppShell";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -18,7 +19,7 @@ async function inviteMember(formData: FormData) {
 }
 
 export default async function TeamPage({ searchParams }: { searchParams: { storeId?: string } }) {
-  const storeId = searchParams.storeId || "demo-store";
+  const { storeId } = await validateStoreAccess(searchParams.storeId);
   
   const memberships = await prisma.appUserStoreMembership.findMany({
     where: { storeId },

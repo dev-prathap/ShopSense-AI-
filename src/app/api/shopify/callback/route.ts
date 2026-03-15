@@ -89,7 +89,8 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  await ensureTrialSubscription(store.id);
+  // Subscription will be handled during Wizard/Billing step
+  // await ensureTrialSubscription(store.id);
   const webhooks = await ensureShopifyWebhooks({
     shopDomain: store.shopDomain,
     accessToken: store.accessToken
@@ -128,7 +129,13 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  const redirect = new URL("/dashboard", process.env.SHOPIFY_APP_URL);
+  // 4. Automate Chatbot Installation via ScriptTag
+  const { ensureShopifyScriptTag } = await import("@/lib/shopify/client");
+  await ensureShopifyScriptTag(store.shopDomain, store.accessToken, store.id).catch(err => {
+    console.error(`[Shopify] Automatic script installation failed for ${store.shopDomain}:`, err);
+  });
+
+  const redirect = new URL("/dashboard/wizard", process.env.SHOPIFY_APP_URL);
   redirect.searchParams.set("storeId", store.id);
   if (webhooks.errors.length > 0) {
     redirect.searchParams.set("webhookStatus", "partial_failure");

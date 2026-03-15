@@ -8,7 +8,7 @@ export function Pricing() {
 
   const plans = [
     {
-      name: "ShopBot AI",
+      name: "Neryn Bot AI",
       tag: "Sales Bot",
       desc: "LLM-powered product discovery and cart assistant embedded on your storefront.",
       price: "$100",

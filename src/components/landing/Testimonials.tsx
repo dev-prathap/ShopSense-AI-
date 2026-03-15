@@ -29,7 +29,7 @@ export function Testimonials() {
         </motion.button>
 
         <h3 className="text-4xl md:text-5xl lg:text-[48px] font-bold text-slate-900 leading-[1.25] tracking-tight max-w-4xl mx-auto">
-          "The ShopSense AI implementation reduced our internal data retrieval time by 80%. Our analysts are finally focused on strategy rather than data hunting."
+          "The Neryn AI implementation reduced our internal data retrieval time by 80%. Our analysts are finally focused on strategy rather than data hunting."
         </h3>
       </motion.div>
 

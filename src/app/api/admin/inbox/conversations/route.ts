@@ -7,7 +7,8 @@ import { prisma } from "@/lib/db/prisma";
 const querySchema = z.object({
   storeId: z.string().min(1),
   status: z.enum(["OPEN", "HANDOFF_REQUESTED", "RESOLVED"]).optional(),
-  limit: z.coerce.number().int().min(1).max(100).optional()
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  cursor: z.string().optional() // Cursor for pagination
 });
 
 export async function GET(req: NextRequest) {
@@ -16,7 +17,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { storeId, status, limit } = parsed.data;
+  const { storeId, status, limit, cursor } = parsed.data;
   const unauthorized = await enforceAdminRole(req, {
     storeId,
     minimumRole: UserRole.STAFF
@@ -25,10 +26,17 @@ export async function GET(req: NextRequest) {
     return unauthorized;
   }
 
+  const pageSize = limit || 30;
+
   const rows = await prisma.conversation.findMany({
     where: {
       storeId,
-      ...(status ? { status } : {})
+      ...(status ? { status } : {}),
+      ...(cursor ? {
+        updatedAt: {
+          lt: new Date(cursor)
+        }
+      } : {})
     },
     include: {
       messages: {
@@ -37,11 +45,18 @@ export async function GET(req: NextRequest) {
       }
     },
     orderBy: { updatedAt: "desc" },
-    take: limit || 30
+    take: pageSize + 1 // Fetch one extra to determine if there are more pages
   });
 
+  // Separate data and next cursor
+  const hasNextPage = rows.length > pageSize;
+  const conversations = hasNextPage ? rows.slice(0, pageSize) : rows;
+  const nextCursor = hasNextPage
+    ? conversations[conversations.length - 1]?.updatedAt?.toISOString()
+    : null;
+
   return NextResponse.json({
-    conversations: rows.map((row) => ({
+    conversations: conversations.map((row) => ({
       id: row.id,
       visitorId: row.visitorId,
       status: row.status,
@@ -52,6 +67,11 @@ export async function GET(req: NextRequest) {
       updatedAt: row.updatedAt,
       latestMessage: row.messages[0]?.content || null,
       latestMessageAt: row.messages[0]?.createdAt || null
-    }))
+    })),
+    pagination: {
+      hasNextPage,
+      nextCursor,
+      limit: pageSize
+    }
   });
 }
