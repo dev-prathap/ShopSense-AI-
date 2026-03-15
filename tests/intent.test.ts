@@ -2,14 +2,14 @@ import { describe, expect, it } from "vitest";
 import { adjustConfidenceBySensitivity, classifyIntent, shouldHandoff } from "../src/lib/ai/intent";
 
 describe("intent classification", () => {
-  it("classifies order tracking", () => {
-    const out = classifyIntent("Where is my order #1234?");
+  it("classifies order tracking", async () => {
+    const out = await classifyIntent("Where is my order #1234?");
     expect(out.intent).toBe("order_tracking");
     expect(out.confidence).toBeGreaterThan(0.8);
   });
 
-  it("classifies product discovery", () => {
-    const out = classifyIntent("Show me black running shoes under $100");
+  it("classifies product discovery", async () => {
+    const out = await classifyIntent("Show me black running shoes under $100");
     expect(out.intent).toBe("product_discovery");
   });
 });

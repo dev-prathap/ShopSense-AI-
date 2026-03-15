@@ -1,13 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
+import { verifyCreemWebhook } from "@/lib/billing/creem";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    // Get raw body as text for signature verification
+    const rawBody = await req.text();
     const signature = req.headers.get("creem-signature");
 
-    // TODO: Verify signature using a secret if Creem provides one
-    console.log("Received Creem webhook", body);
+    // Verify webhook signature
+    const isValidSignature = await verifyCreemWebhook(rawBody, signature || "");
+    if (!isValidSignature) {
+      console.error("Invalid webhook signature");
+      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+    }
+
+    // Parse body after signature verification
+    const body = JSON.parse(rawBody);
+    console.log("Received verified Creem webhook", body.type);
 
     // Event types usually look like: "checkout.succeeded", "payment.succeeded", etc.
     // Based on common billing webhooks:
