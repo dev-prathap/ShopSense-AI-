@@ -65,8 +65,12 @@ function assertSafeUrl(rawUrl: string) {
     throw new Error("invalid_url");
   }
 
-  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:" && parsed.protocol !== "manual:") {
     throw new Error("invalid_protocol");
+  }
+
+  if (parsed.protocol === "manual:") {
+    return; // Skip hostname check for manual protocol
   }
 
   const host = parsed.hostname.toLowerCase();
@@ -96,6 +100,51 @@ export function inferKnowledgeReadiness(sources: Array<{ type: KnowledgeSourceTy
   const hasReturns = published.has("RETURNS");
   const hasFaqOrContact = published.has("FAQ") || published.has("CONTACT");
   return hasShipping && hasReturns && hasFaqOrContact;
+}
+
+export async function upsertManualTextSource(input: {
+  storeId: string;
+  title: string;
+  content: string;
+}) {
+  const url = `manual://${input.title.toLowerCase().replace(/[^a-z0-9]/g, "-")}`;
+  const cleanText = normalizeText(input.content);
+  
+  if (cleanText.length < 20) {
+    throw new Error("Content is too short. Please provide at least 20 characters.");
+  }
+
+  const source = await prisma.knowledgeSource.upsert({
+    where: {
+      storeId_type_url: {
+        storeId: input.storeId,
+        type: "CUSTOM",
+        url
+      }
+    },
+    update: {
+      status: "FETCHED",
+      rawText: input.content,
+      cleanText,
+      checksum: sha256(cleanText),
+      lastFetchedAt: new Date(),
+      summaryText: null,
+      approvedAt: null,
+      publishedAt: null
+    },
+    create: {
+      storeId: input.storeId,
+      type: "CUSTOM",
+      url,
+      status: "FETCHED",
+      rawText: input.content,
+      cleanText,
+      checksum: sha256(cleanText),
+      lastFetchedAt: new Date()
+    }
+  });
+
+  return source;
 }
 
 export async function listKnowledgeSources(storeId: string) {

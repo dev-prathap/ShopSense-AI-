@@ -1,21 +1,33 @@
-# Task Plan - Product Analysis
+# ShopSense AI Implementation Plan
 
-## Goal
+## Phase 1: Merchant Inbox & Human Handoff (COMPLETE)
 
-Perform a comprehensive analysis of the "BOT" (AI Sales Agent for Shopify) project.
+- [x] List conversations in the dashboard.
+- [x] Add deep-link to individual conversation view.
+- [x] Create detailed conversation view with full message history.
+- [x] Implement merchant "Reply" functionality (updates the chat for the visitor).
+- [x] Add "Resolve" button for conversations.
 
-## Phases
+## Phase 2: Enhanced Widget Aesthetics (COMPLETE)
 
-- [x] Phase 1: Information Gathering (List directories, read README, check schema)
-- [ ] Phase 2: Deep Dive into Core Logic (Analyze `lib/` and `app/api/`)
-- [ ] Phase 3: Architecture & Data Flow Mapping
-- [ ] Phase 4: Final Report Generation
+- [x] Refine `WidgetEmbedClient.tsx` with premium SpaceX-inspired animations.
+- [x] Add modern typography and glassmorphism.
+- [ ] Add support for "Store Info" view in the widget.
 
-## Decisions
+## Phase 3: Knowledge Base Improvements (COMPLETE)
 
-- Use the `planning-with-files` pattern to maintain persistent memory.
-- Focus on the AI integration, Shopify hooks, and recovery logic as they are central to the product.
+- [x] Add manual text/FAQ entry form in `KnowledgeSetup`.
+- [x] Created API for direct text ingestion.
+- [x] Implement "Re-train" button for individual sources.
 
-## Errors Encountered
+## Phase 4: Shopify Sync & Auto-Updates (PROGRESSING)
 
-- None so far.
+- [x] Setup Webhook handlers for `products/update`.
+- [x] Created Knowledge Sync Cron job.
+- [ ] Add "Sync Now" button in Dashboard.
+
+## Phase 5: Notifications & Billing
+
+- [ ] Implement email notifications for "Human Handoff".
+- [ ] Add monthly message usage tracking.
+- [ ] Implement hard-limits for Starter tier.

@@ -2,10 +2,10 @@ import "server-only";
 
 export function getGoogleOAuthUrl(state: string) {
   const clientId = process.env.GOOGLE_CLIENT_ID;
-  const redirectUri = process.env.GOOGLE_REDIRECT_URI;
+  const redirectUri = process.env.GOOGLE_REDIRECT_URI || `${process.env.SHOPIFY_APP_URL}/api/auth/google/callback`;
 
   if (!clientId || !redirectUri) {
-    throw new Error("Google OAuth env is missing");
+    throw new Error("Google OAuth configuration is incomplete. Please set GOOGLE_CLIENT_ID and GOOGLE_REDIRECT_URI (or SHOPIFY_APP_URL).");
   }
 
   const params = new URLSearchParams({
@@ -24,10 +24,10 @@ export function getGoogleOAuthUrl(state: string) {
 export async function exchangeGoogleCodeForProfile(code: string) {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const redirectUri = process.env.GOOGLE_REDIRECT_URI;
+  const redirectUri = process.env.GOOGLE_REDIRECT_URI || `${process.env.SHOPIFY_APP_URL}/api/auth/google/callback`;
 
   if (!clientId || !clientSecret || !redirectUri) {
-    throw new Error("Google OAuth env is missing");
+    throw new Error("Google OAuth configuration is incomplete. Please set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET and GOOGLE_REDIRECT_URI.");
   }
 
   const tokenRes = await fetch("https://oauth2.googleapis.com/token", {

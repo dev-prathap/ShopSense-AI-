@@ -16,6 +16,7 @@ export async function classifyIntent(text: string): Promise<{ intent: ChatIntent
           content: `Classify the following user message into ONE of these intents: 
           - product_discovery (searching for things to buy, "what do you have", "show me", "you have", "best products", "cheapest", "available items")
           - product_question (specific specs, size, material, "does this have", "how big")
+          - add_to_cart (user wants to add a specific item to their shopping cart, "add to cart", "buy this", "put in my bag")
           - shipping_policy (delivery time, where do you ship)
           - order_tracking (where is my order, status)
           - returns_policy (how to return, refund process)
@@ -36,7 +37,7 @@ export async function classifyIntent(text: string): Promise<{ intent: ChatIntent
     // Safety check to ensure it's a valid intent
     const validIntents: ChatIntent[] = [
       "product_discovery", "product_question", "shipping_policy", "order_tracking",
-      "returns_policy", "billing_or_refund", "small_talk", "unknown"
+      "returns_policy", "billing_or_refund", "small_talk", "add_to_cart", "unknown"
     ];
     
     if (validIntents.includes(intentText)) {

@@ -88,35 +88,35 @@ export default async function OnboardingPage({ searchParams }: { searchParams: {
     <AppShell
       storeId={storeId}
       nav={[
-        { href: `/dashboard/onboarding?storeId=${storeId}`, label: "Onboarding", active: true },
-        { href: `/dashboard?storeId=${storeId}`, label: "Dashboard" },
-        { href: `/dashboard/inbox?storeId=${storeId}`, label: "Inbox" },
-        { href: `/dashboard/settings?storeId=${storeId}`, label: "Settings" },
-        { href: `/dashboard/billing?storeId=${storeId}`, label: "Billing" }
+        { href: `/dashboard?storeId=${storeId}`, label: "Insights" },
+        { href: `/dashboard/onboarding?storeId=${storeId}`, label: "Knowledge", active: true },
+        { href: `/dashboard/inbox?storeId=${storeId}`, label: "Conversations" },
+        { href: `/dashboard/settings?storeId=${storeId}`, label: "Configuration" },
+        { href: `/dashboard/billing?storeId=${storeId}`, label: "Plan" }
       ]}
     >
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-10">
         <PageHeader
-          title="2-Minute Guided Setup"
-          subtitle="Connect Shopify, train AI knowledge, and launch."
-          action={<StatusPill label={onboardingState.canComplete ? "Ready to complete" : "Setup in progress"} tone={onboardingState.canComplete ? "success" : "warning"} />}
+          title="Knowledge Center"
+          subtitle="Manage store intelligence, training sources, and AI memory."
+          action={<StatusPill label={onboardingState.canComplete ? "Fully Trained" : "Training Required"} tone={onboardingState.canComplete ? "success" : "warning"} />}
         />
 
         <ActionPanel
-          title="1. Shopify Connection"
-          description="We use your connected Shopify store to power catalog and order intelligence."
+          title="Core Connectivity"
+          description="Your Shopify connection powers real-time catalog and order intelligence."
         >
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="rounded-md border bg-muted/30 p-3 text-sm">
-              <p>Store: {store.shopDomain}</p>
-              <p>Status: {connected ? "Connected" : "Not connected"}</p>
+          <div className="flex flex-wrap items-center justify-between gap-4 bg-slate-50/50 p-6 rounded-2xl border border-slate-100">
+            <div className="space-y-1">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Connected Store</p>
+              <p className="text-sm font-bold text-slate-900">{store.shopDomain}</p>
             </div>
             <div className="flex gap-2">
               <a href={`/api/shopify/install?shop=${encodeURIComponent(store.shopDomain)}`}>
-                <Button variant="outline">Reconnect Shopify</Button>
+                <Button variant="outline" className="rounded-xl font-bold border-slate-200">Sync Now</Button>
               </a>
               <Link href="/dashboard/connect">
-                <Button variant="ghost">Use another store</Button>
+                <Button variant="ghost" className="rounded-xl font-bold text-slate-500 hover:text-slate-900">Change Store</Button>
               </Link>
             </div>
           </div>
@@ -125,27 +125,37 @@ export default async function OnboardingPage({ searchParams }: { searchParams: {
         <KnowledgeSetup storeId={storeId} />
 
         <ActionPanel
-          title="3. Go Live"
-          description="When both checks are ready, complete onboarding and enter dashboard."
+          title="Launch Control"
+          description="Finalize your setup by publishing the latest intelligence to your storefront."
         >
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-6 bg-slate-50/50 p-6 rounded-2xl border border-slate-100">
             <form action={completeQuickOnboarding}>
               <input type="hidden" name="storeId" value={storeId} />
-              <Button type="submit" disabled={!onboardingState.canComplete}>
-                Go to Dashboard
+              <Button 
+                type="submit" 
+                disabled={!onboardingState.canComplete}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 h-12 rounded-xl shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:shadow-none transition-all"
+              >
+                Enter Dashboard
               </Button>
             </form>
-            <p className="text-sm text-muted-foreground">
-              Published sources: {onboardingState.publishedSources}
-              {onboardingState.lastTrainedAt ? ` • Last trained ${new Date(onboardingState.lastTrainedAt).toLocaleString()}` : ""}
-            </p>
+            <div className="space-y-1">
+              <p className="text-[12px] font-bold text-slate-700">
+                {onboardingState.publishedSources} Knowledge Sources published
+              </p>
+              {onboardingState.lastTrainedAt ? (
+                <p className="text-[11px] font-medium text-slate-400">
+                  Last updated {new Date(onboardingState.lastTrainedAt).toLocaleString()}
+                </p>
+              ) : null}
+            </div>
           </div>
-          <div className="mt-2 flex gap-3 text-sm">
-            <Link href={`/dashboard/settings?storeId=${storeId}`} className="text-muted-foreground underline">
-              Advanced settings (optional)
+          <div className="mt-6 flex gap-6 text-[13px] font-bold">
+            <Link href={`/dashboard/settings?storeId=${storeId}`} className="text-slate-400 hover:text-blue-600 transition-colors">
+              Advanced Settings
             </Link>
-            <Link href={`/widget?storeId=${storeId}`} className="text-muted-foreground underline">
-              Test widget
+            <Link href={`/widget?storeId=${storeId}`} className="text-slate-400 hover:text-blue-600 transition-colors" target="_blank">
+              Preview Widget
             </Link>
           </div>
         </ActionPanel>

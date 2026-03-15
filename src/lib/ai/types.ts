@@ -6,6 +6,7 @@ export type ChatIntent =
   | "returns_policy"
   | "billing_or_refund"
   | "small_talk"
+  | "add_to_cart"
   | "unknown";
 
 export interface ChatInput {
@@ -24,6 +25,7 @@ export interface ProductHit {
   currency: string;
   inStock: boolean;
   reason: string;
+  variantId?: string;
 }
 
 export interface ChatOutput {
@@ -31,6 +33,11 @@ export interface ChatOutput {
   intent: ChatIntent;
   confidence: number;
   products: ProductHit[];
+  action?: {
+    type: "add_to_cart";
+    variantId: string;
+    productTitle: string;
+  };
   handoff: {
     required: boolean;
     reason?: string;

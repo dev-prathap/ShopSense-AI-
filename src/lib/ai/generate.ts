@@ -119,6 +119,7 @@ export function shapeChatOutput(data: {
   intent: ChatOutput["intent"];
   confidence: number;
   products: ChatOutput["products"];
+  action?: ChatOutput["action"];
   handoff: ChatOutput["handoff"];
 }): ChatOutput {
   return data;

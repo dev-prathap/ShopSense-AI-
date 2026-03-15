@@ -8,12 +8,14 @@ export function ActionPanel({
   children: React.ReactNode;
 }) {
   return (
-    <section className="surface-elevated motion-enter rounded-xl border p-5">
-      <div className="mb-4">
-        <h2 className="type-title">{title}</h2>
-        {description ? <p className="type-body text-muted-foreground">{description}</p> : null}
+    <section className="glass-card motion-enter rounded-2xl p-6 border-slate-200/60 transition-all duration-300">
+      <div className="mb-6">
+        <h2 className="text-xl font-bold text-slate-900 tracking-tight">{title}</h2>
+        {description ? <p className="text-[15px] font-medium text-slate-500 mt-1">{description}</p> : null}
       </div>
-      {children}
+      <div className="relative z-10">
+        {children}
+      </div>
     </section>
   );
 }

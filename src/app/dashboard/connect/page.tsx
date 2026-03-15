@@ -1,82 +1,106 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ArrowLeft, ExternalLink, Loader2 } from "lucide-react";
 
 export default function ConnectPage() {
+  const [isLoading, setIsLoading] = useState(false);
+
   return (
-    <main className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_top_right,rgba(15,118,110,0.1),transparent_40%),radial-gradient(circle_at_20%_20%,rgba(245,158,11,0.05),transparent_40%)] px-4 py-20">
+    <main className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-slate-50 px-4 py-20">
       {/* Decorative background elements */}
-      <div className="absolute -top-24 -left-24 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
-      <div className="absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-accent/5 blur-3xl" />
+      <div className="absolute top-0 left-0 w-full h-full bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
+      
+      <div className="absolute -top-24 -left-24 h-96 w-96 rounded-full bg-blue-500/5 blur-3xl" />
+      <div className="absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-indigo-500/5 blur-3xl" />
 
       <div className="relative z-10 w-full max-w-xl">
         <Link 
           href="/dashboard" 
-          className="group mb-6 inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+          className="group mb-8 inline-flex items-center gap-2 text-sm font-bold text-slate-400 transition-all hover:text-blue-600"
         >
           <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
           Back to Dashboard
         </Link>
 
-        <Card className="border-border/40 bg-card/60 shadow-2xl backdrop-blur-xl">
-          <CardHeader className="space-y-4 pb-8 text-center pt-10">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-[#95BF47]/10 shadow-inner">
-              <svg viewBox="0 0 150 172" className="h-12 w-12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M129.5 38.6c-.1-.1-.3-.2-.4-.2L117.8 35 105.3 2.3c-.3-.9-1.1-1.5-2-1.5-.9 0-1.7.6-2 1.5L88.8 35l-11.3 3.6c-.2.1-.3.1-.4.2-.1.1-.3.3-.3.5l-6.8 59.1V102c0 10.7 8.7 19.3 19.3 19.3h51c10.7 0 19.3-8.7 19.3-19.3v-3.6l-6.8-59.1c0-.2-.1-.5-.3-.7zm-11.7 81.3c0 1.2-1 2.2-2.2 2.2H69.8c-1.2 0-2.2-1-2.2-2.2v-3.6l5.9-51.5 12.3-3.9 4-10.4 20 4.1 4 10.4 12.3 3.9 5.9 51.5v3.6z" fill="#95BF47"/>
-              </svg>
+        <Card className="border-slate-200/60 bg-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.08)] rounded-[2.5rem] overflow-hidden">
+          <CardHeader className="space-y-6 pb-10 text-center pt-12 bg-slate-50/50 border-b border-slate-100">
+            <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-3xl bg-white shadow-sm border border-slate-100 overflow-hidden group-hover:scale-105 transition-transform">
+               <img src="/shopify/glyph.svg" alt="Shopify" className="h-12 w-12 object-contain" />
             </div>
-            <div className="space-y-2">
-              <CardTitle className="text-3xl font-bold tracking-tight">Connect Your Shopify Store</CardTitle>
-              <CardDescription className="text-base">
-                Link your storefront to start training the AI on your brand.
+            <div className="space-y-2 px-6">
+              <CardTitle className="text-3xl font-black text-slate-900 tracking-tight">Connect Shopify</CardTitle>
+              <CardDescription className="text-[17px] font-medium text-slate-500">
+                Sync your catalog to train ShopSense AI and start converting shoppers.
               </CardDescription>
             </div>
           </CardHeader>
-          <CardContent className="px-8 pb-10">
-            <form action="/api/shopify/install" method="GET" className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground" htmlFor="shop">
-                  Store Domain (.myshopify.com)
+          <CardContent className="px-10 pb-12 pt-10">
+            <form 
+              action="/api/shopify/install" 
+              method="GET" 
+              className="space-y-8"
+              onSubmit={() => setIsLoading(true)}
+            >
+              <div className="space-y-3">
+                <label className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 pl-1" htmlFor="shop">
+                  Store Domain
                 </label>
-                <div className="relative">
+                <div className="relative group">
                   <Input
                     id="shop"
                     name="shop"
                     required
+                    disabled={isLoading}
                     placeholder="your-brand-name.myshopify.com"
-                    className="h-12 border-border/60 bg-white/50 px-4 text-lg transition-all focus:border-primary focus:ring-primary/20"
+                    className="h-14 border-slate-200 bg-white px-5 text-lg font-medium transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 rounded-2xl"
                   />
+                  <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-slate-950/[0.05] pointer-events-none" />
                 </div>
               </div>
               
-              <Button type="submit" size="lg" className="w-full text-lg shadow-lg shadow-primary/20">
-                Install and Connect
+              <Button 
+                type="submit" 
+                size="lg" 
+                disabled={isLoading}
+                className="w-full h-14 text-lg font-bold shadow-xl shadow-blue-500/20 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl transition-all hover:translate-y-[-2px] active:translate-y-[0px]"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-3 h-6 w-6 animate-spin" />
+                    Connecting...
+                  </>
+                ) : (
+                  "Install App & Connect"
+                )}
               </Button>
             </form>
 
-            <div className="mt-8 rounded-xl border border-border/50 bg-muted/30 p-4">
-              <div className="flex gap-3">
-                <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary">
-                  <span className="text-[10px] font-bold">i</span>
+            <div className="mt-10 rounded-2xl border border-slate-100 bg-slate-50/50 p-5">
+              <div className="flex gap-4">
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+                  <span className="text-xs font-black italic">!</span>
                 </div>
-                <p className="text-xs leading-relaxed text-muted-foreground">
-                  <strong>Pro Tip:</strong> You can find your specific domain in the Shopify Admin URL. It usually looks like 
-                  <code className="mx-1 rounded bg-muted-foreground/10 px-1 py-0.5 font-mono text-primary">admin.shopify.com/store/your-store</code>.
+                <p className="text-[13px] leading-relaxed text-slate-500 font-medium">
+                  Find your domain in the Shopify Admin URL. It usually looks like 
+                  <code className="mx-1.5 rounded-md bg-blue-50 text-blue-700 px-1.5 py-0.5 font-bold font-mono text-[12px] border border-blue-100/50">your-store.myshopify.com</code>.
                 </p>
               </div>
             </div>
 
-            <div className="mt-8 flex justify-center border-t border-border/40 pt-6">
+            <div className="mt-10 flex justify-center border-t border-slate-100 pt-8">
               <a 
                 href="https://help.shopify.com/en/manual/intro-to-shopify/initial-setup" 
                 target="_blank" 
                 rel="noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-primary"
+                className="inline-flex items-center gap-2 text-[13px] font-bold text-slate-400 transition-all hover:text-blue-600"
               >
                 Learn more about Shopify settings
-                <ExternalLink className="h-3 w-3" />
+                <ExternalLink className="h-3.5 w-3.5" />
               </a>
             </div>
           </CardContent>
@@ -85,4 +109,3 @@ export default function ConnectPage() {
     </main>
   );
 }
-

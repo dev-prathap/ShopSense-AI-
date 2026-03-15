@@ -107,6 +107,28 @@
     if (data.type === "ASA_WIDGET_RESIZE" && iframe && typeof data.height === "number") {
       // Logic for dynamic resize if needed
     }
+
+    if (data.type === "ASA_CART_ADD" && data.variantId) {
+      console.log("AI Sales Agent: adding to cart", data.variantId);
+      // Traditional Shopify Ajax API
+      fetch("/cart/add.js", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: [{ id: data.variantId, quantity: 1 }]
+        })
+      })
+      .then(function(res) {
+        if (res.ok) {
+           window.location.href = "/cart";
+        } else {
+           console.error("AI Sales Agent: cart add failed");
+        }
+      })
+      .catch(function(err) {
+        console.error("AI Sales Agent: cart add error", err);
+      });
+    }
   });
 
   document.body.appendChild(button);

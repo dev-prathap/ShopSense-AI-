@@ -46,44 +46,68 @@ export async function handleChat(input: ChatInput): Promise<ChatOutput> {
   const retrievedProducts = await retrieveProductsForQuery(input.storeId, searchQuery);
   const knowledgeHits = await retrieveKnowledgeForQuery(input.storeId, searchQuery);
 
-  const showProducts = intent === "product_discovery" || intent === "product_question";
+  const showProducts = intent === "product_discovery" || intent === "product_question" || intent === "add_to_cart";
   
   const maxProducts = storeSettings?.aiMaxRecommendations ?? 3;
 
-  const toProductHit = (item: any, reason: string) => ({
-    id: item.id,
-    url: item.handle ? `https://${storeSettings.shopDomain}/products/${item.handle}` : undefined,
-    title: item.title,
-    description: item.description,
-    price: typeof item.price === "number" ? item.price : Number(item.price),
-    currency: item.currency,
-    inStock: item.inStock,
-    reason
-  });
+  const toProductHit = async (item: any, reason: string) => {
+    // Fetch first variant for cart add functionality
+    const variant = await prisma.productVariant.findFirst({
+      where: { productId: item.id },
+      orderBy: { createdAt: "asc" }
+    });
+
+    return {
+      id: item.id,
+      url: item.handle ? `https://${storeSettings.shopDomain}/products/${item.handle}` : undefined,
+      title: item.title,
+      description: item.description,
+      price: typeof item.price === "number" ? item.price : Number(item.price),
+      currency: item.currency,
+      inStock: item.inStock,
+      reason,
+      variantId: variant?.shopifyVariantId
+    };
+  };
 
   let finalProducts: any[] = [];
 
   if (showProducts && retrievedProducts.length > 0) {
-    // For discovery: just take top N — no threshold needed
-    // For product_question: use a light threshold to stay precise
-    const threshold = intent === "product_question" ? 0.35 : 0;
-    finalProducts = (retrievedProducts as any[])
+    const threshold = (intent === "product_question" || intent === "add_to_cart") ? 0.35 : 0;
+    const sorted = (retrievedProducts as any[])
       .filter(item => item.similarity > threshold)
-      .slice(0, maxProducts)
-      .map(item => toProductHit(item, item.similarity > 0.7 ? "Highly relevant to your search" : "Recommended for you"));
+      .slice(0, maxProducts);
+    
+    finalProducts = await Promise.all(
+      sorted.map(item => toProductHit(item, item.similarity > 0.7 ? "Highly relevant to your search" : "Recommended for you"))
+    );
   }
 
-  // If intent says show products but retrieval returned nothing at all, query DB directly
+  // Fallback if empty
   if (showProducts && finalProducts.length === 0) {
     const fallback = await prisma.product.findMany({
       where: { storeId: input.storeId },
       take: maxProducts,
       orderBy: { updatedAt: "desc" }
     });
-    finalProducts = fallback.map(p => toProductHit(p, "Featured in our store"));
+    finalProducts = await Promise.all(
+      fallback.map(p => toProductHit(p, "Featured in our store"))
+    );
   }
 
-  console.log(`[ShopSense] Final products: ${finalProducts.length} | Names: ${finalProducts.map(p => p.title).join(", ")}`);
+  let action: any = undefined;
+  if (intent === "add_to_cart" && finalProducts.length > 0) {
+    const best = finalProducts[0];
+    if (best.variantId) {
+      action = {
+        type: "add_to_cart",
+        variantId: best.variantId,
+        productTitle: best.title
+      };
+    }
+  }
+
+  console.log(`[ShopSense] Intent: ${intent} | Final products: ${finalProducts.length}`);
 
   const missingPolicyKnowledge = (intent === "shipping_policy" || intent === "returns_policy") && 
     !knowledgeHits.some(k => k.similarity > 0.45);
@@ -115,6 +139,7 @@ export async function handleChat(input: ChatInput): Promise<ChatOutput> {
     intent,
     confidence: effectiveConfidence,
     products: finalProducts,
+    action,
     handoff: missingPolicyKnowledge ? { required: true, reason: "missing_policy_knowledge" } : handoff
   });
 }
