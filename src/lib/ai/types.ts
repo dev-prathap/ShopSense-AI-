@@ -26,6 +26,15 @@ export interface ProductHit {
   inStock: boolean;
   reason: string;
   variantId?: string;
+  variants?: Array<{
+    variant_name: string;
+    sku: string | null;
+    in_stock: boolean;
+    shopify_variant_id: string;
+  }>;
+  rating?: number | null;
+  review_count?: number | null;
+  top_reviews?: string[];
 }
 
 export interface ChatOutput {

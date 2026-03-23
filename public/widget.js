@@ -31,10 +31,26 @@
   var host = String(cfg.host).replace(/\/$/, "");
   var position = cfg.position === "left" ? "left" : "right";
   var primaryColor = cfg.primaryColor || "#000000";
+  var prewarmed = false;
   
   var iframe = null;
   var open = false;
   var zIndex = 2147483000;
+  var allowedOrigins = {};
+  allowedOrigins[host] = true;
+  if (window.location && window.location.origin) {
+    allowedOrigins[window.location.origin] = true;
+  }
+  allowedOrigins["http://localhost:3000"] = true;
+  allowedOrigins["http://127.0.0.1:3000"] = true;
+
+  // Improve first-open speed by preconnecting to widget host.
+  try {
+    var preconnect = document.createElement("link");
+    preconnect.rel = "preconnect";
+    preconnect.href = host;
+    document.head.appendChild(preconnect);
+  } catch (_) {}
 
   var button = document.createElement("button");
   button.type = "button";
@@ -92,6 +108,12 @@
     document.body.appendChild(iframe);
   }
 
+  function prewarmIframe() {
+    if (prewarmed) return;
+    prewarmed = true;
+    mountIframe();
+  }
+
   function setOpen(next) {
     mountIframe();
     open = next;
@@ -120,9 +142,17 @@
   button.addEventListener("click", function () {
     setOpen(!open);
   });
+  button.addEventListener("mouseenter", prewarmIframe, { passive: true });
+  button.addEventListener("touchstart", prewarmIframe, { passive: true });
+
+  if ("requestIdleCallback" in window) {
+    window.requestIdleCallback(prewarmIframe, { timeout: 2000 });
+  } else {
+    setTimeout(prewarmIframe, 1800);
+  }
 
   window.addEventListener("message", function (event) {
-    if (event.origin !== host && !event.origin.includes('localhost')) return;
+    if (!allowedOrigins[event.origin] && !event.origin.includes("localhost")) return;
     var data = event && event.data ? event.data : {};
     if (data.type === "ASA_WIDGET_CLOSE") {
       setOpen(false);

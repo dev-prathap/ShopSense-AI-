@@ -31,6 +31,8 @@ function isAllowedOrigin(input: { origin: string | null; shopDomain: string }) {
     
     // Vercel preview/deployment domains
     if (host.endsWith(".vercel.app")) return true;
+    // Cloudflare quick tunnels for local development
+    if (host.endsWith(".trycloudflare.com")) return true;
 
     return false;
   } catch {

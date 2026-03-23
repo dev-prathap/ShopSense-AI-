@@ -7,6 +7,9 @@ export async function GET(req: NextRequest) {
   const storeId = searchParams.get("storeId");
   const conversationId = searchParams.get("conversationId");
   const visitorId = searchParams.get("visitorId");
+  const before = searchParams.get("before");
+  const limitRaw = Number(searchParams.get("limit") || 20);
+  const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 50) : 20;
 
   if (!storeId || !conversationId || !visitorId) {
     return NextResponse.json({ error: "missing_params" }, { status: 400 });
@@ -17,19 +20,30 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: auth.reason }, { status: 401 });
   }
 
-  const messages = await prisma.message.findMany({
-    where: {
-      conversationId,
-      conversation: {
-        storeId,
-        visitorId
-      }
-    },
+  const beforeDate = before ? new Date(before) : null;
+  const whereClause: any = {
+    conversationId,
+    conversation: {
+      storeId,
+      visitorId
+    }
+  };
+  if (beforeDate && !Number.isNaN(beforeDate.getTime())) {
+    whereClause.createdAt = { lt: beforeDate };
+  }
+
+  // Query newest-first for efficient cursor paging, then reverse for UI display.
+  const rows = await prisma.message.findMany({
+    where: whereClause,
     orderBy: {
-      createdAt: "asc"
+      createdAt: "desc"
     },
-    take: 50
+    take: limit + 1
   });
+  const hasMore = rows.length > limit;
+  const sliced = hasMore ? rows.slice(0, limit) : rows;
+  const messages = [...sliced].reverse();
+  const nextCursor = hasMore ? messages[0]?.createdAt.toISOString() : null;
 
   return NextResponse.json({
     messages: messages.map(m => ({
@@ -37,6 +51,8 @@ export async function GET(req: NextRequest) {
       role: m.role,
       content: m.content,
       timestamp: m.createdAt
-    }))
+    })),
+    hasMore,
+    nextCursor
   });
 }

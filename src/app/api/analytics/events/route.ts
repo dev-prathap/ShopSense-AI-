@@ -9,10 +9,20 @@ import { consumeRateLimit } from "@/lib/security/rate-limit";
 const eventSchema = z.object({
   storeId: z.string().min(1),
   conversationId: z.string().optional(),
-  eventType: z.enum(["session_start", "widget_open", "message_sent", "product_click", "conversion", "recovery_accept"]),
+  eventType: z.enum([
+    "session_start",
+    "widget_open",
+    "message_sent",
+    "product_click",
+    "conversion",
+    "recovery_accept",
+    "history_loaded",
+    "first_response"
+  ]),
   productId: z.string().optional(),
   offerCode: z.string().optional(),
-  revenue: z.number().optional()
+  revenue: z.number().optional(),
+  metricMs: z.number().int().nonnegative().max(120_000).optional()
 });
 
 export async function POST(req: NextRequest) {
@@ -110,6 +120,11 @@ export async function POST(req: NextRequest) {
         acceptedAt: new Date()
       }
     });
+  }
+
+  // Perf pings are accepted for observability without expensive snapshot work.
+  if (eventType === "history_loaded" || eventType === "first_response") {
+    return NextResponse.json({ ok: true });
   }
 
   const snapshot = await getAnalyticsSnapshot(storeId);

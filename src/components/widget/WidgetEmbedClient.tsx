@@ -60,6 +60,7 @@ function setConversationId(storeId: string, conversationId: string) {
 }
 
 export default function WidgetEmbedClient({ storeId, embedded = false }: Props) {
+  const HISTORY_PAGE_SIZE = 20;
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversationId, setConversation] = useState<string | undefined>(undefined);
@@ -69,7 +70,13 @@ export default function WidgetEmbedClient({ storeId, embedded = false }: Props) 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const [sessionStarted, setSessionStarted] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyCursor, setHistoryCursor] = useState<string | null>(null);
+  const [hasMoreHistory, setHasMoreHistory] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const initializedRef = useRef(false);
+  const autoScrollRef = useRef(true);
+  const firstResponseTrackedRef = useRef(false);
   const isSubscriptionMissing = error === "subscription_missing";
   const friendlyErrorMessage = isSubscriptionMissing
     ? "Assistant is getting things ready. Please ask the store team to activate billing, then try again."
@@ -119,8 +126,71 @@ export default function WidgetEmbedClient({ storeId, embedded = false }: Props) 
     return data.token as string;
   }
 
+  async function emitAnalyticsEvent(params: {
+    eventType: "widget_open" | "message_sent" | "product_click" | "conversion" | "recovery_accept" | "history_loaded" | "first_response";
+    conversationId?: string;
+    productId?: string;
+    metricMs?: number;
+  }) {
+    try {
+      const signedToken = await ensureSessionToken();
+      await fetch("/api/analytics/events", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${signedToken}`
+        },
+        body: JSON.stringify({
+          storeId,
+          conversationId: params.conversationId,
+          eventType: params.eventType,
+          productId: params.productId,
+          metricMs: params.metricMs
+        })
+      });
+    } catch {
+      // Ignore analytics errors to avoid disrupting shopper flow.
+    }
+  }
+
+  async function loadHistoryPage(args: {
+    signedToken: string;
+    cid: string;
+    vid: string;
+    before?: string | null;
+  }) {
+    const q = new URLSearchParams({
+      storeId,
+      conversationId: args.cid,
+      visitorId: args.vid,
+      limit: String(HISTORY_PAGE_SIZE)
+    });
+    if (args.before) q.set("before", args.before);
+
+    const hRes = await fetch(`/api/chat/history?${q.toString()}`, {
+      headers: { Authorization: `Bearer ${args.signedToken}` }
+    });
+    const hData = await hRes.json().catch(() => ({ messages: [] }));
+    if (!hRes.ok) {
+      throw new Error(hData.error || "history_failed");
+    }
+
+    const mapped = (hData.messages || []).map((m: any) => ({
+      ...m,
+      timestamp: new Date(m.timestamp)
+    })) as Message[];
+
+    return {
+      messages: mapped,
+      hasMore: Boolean(hData.hasMore),
+      nextCursor: (hData.nextCursor as string | null) || null
+    };
+  }
+
   // Initial setup
   useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
     const vid = getOrCreateVisitorId(storeId);
     setVisitorId(vid);
 
@@ -130,18 +200,25 @@ export default function WidgetEmbedClient({ storeId, embedded = false }: Props) 
     ensureSessionToken(true)
       .then(async (signedToken) => {
         setError("");
-        
+        const historyLoadStartedAt = performance.now();
+
         if (cid) {
           try {
-            const hRes = await fetch(`/api/chat/history?storeId=${storeId}&conversationId=${cid}&visitorId=${vid}`, {
-              headers: { Authorization: `Bearer ${signedToken}` }
+            const page = await loadHistoryPage({
+              signedToken,
+              cid,
+              vid
             });
-            const hData = await hRes.json();
-            if (hRes.ok && hData.messages?.length > 0) {
-              setMessages(hData.messages.map((m: any) => ({
-                ...m,
-                timestamp: new Date(m.timestamp)
-              })));
+            if (page.messages.length > 0) {
+              setMessages(page.messages);
+              setHasMoreHistory(page.hasMore);
+              setHistoryCursor(page.nextCursor);
+              const historyLoadMs = Math.max(0, Math.round(performance.now() - historyLoadStartedAt));
+              void emitAnalyticsEvent({
+                eventType: "history_loaded",
+                conversationId: cid,
+                metricMs: historyLoadMs
+              });
               return; // Skip welcome message if we have history
             }
           } catch (e) {
@@ -166,12 +243,62 @@ export default function WidgetEmbedClient({ storeId, embedded = false }: Props) 
       });
   }, [storeId]);
 
+  async function loadOlderMessages() {
+    if (!conversationId || !visitorId || !historyCursor || historyLoading || !hasMoreHistory) {
+      return;
+    }
+    setHistoryLoading(true);
+    autoScrollRef.current = false;
+    const scroller = scrollRef.current;
+    const previousHeight = scroller?.scrollHeight || 0;
+    try {
+      const signedToken = await ensureSessionToken();
+      const page = await loadHistoryPage({
+        signedToken,
+        cid: conversationId,
+        vid: visitorId,
+        before: historyCursor
+      });
+      if (page.messages.length > 0) {
+        setMessages((prev) => {
+          const existing = new Set(prev.map((m) => m.id));
+          const unique = page.messages.filter((m) => !existing.has(m.id));
+          return [...unique, ...prev];
+        });
+      }
+      setHasMoreHistory(page.hasMore);
+      setHistoryCursor(page.nextCursor);
+      requestAnimationFrame(() => {
+        if (!scroller) return;
+        const nextHeight = scroller.scrollHeight;
+        scroller.scrollTop = Math.max(0, nextHeight - previousHeight);
+      });
+    } catch (e) {
+      console.error("Failed loading older messages", e);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }
+
   // Auto scroll
   useEffect(() => {
-    if (scrollRef.current) {
+    if (scrollRef.current && autoScrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
+    autoScrollRef.current = true;
   }, [messages, loading]);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      if (el.scrollTop < 48 && hasMoreHistory && !historyLoading) {
+        void loadOlderMessages();
+      }
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [hasMoreHistory, historyLoading, historyCursor, conversationId, visitorId]);
 
   async function sendMessage(text?: string) {
     const prompt = (text ?? input).trim();
@@ -188,9 +315,14 @@ export default function WidgetEmbedClient({ storeId, embedded = false }: Props) 
     setInput("");
     setLoading(true);
     setError("");
+    const firstResponseStartedAt = performance.now();
 
     try {
       const signedToken = await ensureSessionToken();
+      void emitAnalyticsEvent({
+        eventType: "message_sent",
+        conversationId
+      });
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: {
@@ -212,6 +344,7 @@ export default function WidgetEmbedClient({ storeId, embedded = false }: Props) 
         setConversation(data.conversationId);
         setConversationId(storeId, data.conversationId);
       }
+      const activeConversationId = data.conversationId || conversationId;
 
       const assistantMsg: Message = {
         id: (Date.now() + 1).toString(),
@@ -222,6 +355,15 @@ export default function WidgetEmbedClient({ storeId, embedded = false }: Props) 
       };
 
       setMessages(prev => [...prev, assistantMsg]);
+      if (!firstResponseTrackedRef.current) {
+        firstResponseTrackedRef.current = true;
+        const firstResponseMs = Math.max(0, Math.round(performance.now() - firstResponseStartedAt));
+        void emitAnalyticsEvent({
+          eventType: "first_response",
+          conversationId: activeConversationId,
+          metricMs: firstResponseMs
+        });
+      }
 
       // Handle Cart Action
       if (data.action?.type === "add_to_cart") {
@@ -272,6 +414,11 @@ export default function WidgetEmbedClient({ storeId, embedded = false }: Props) 
         ref={scrollRef}
         className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-8 scroll-smooth custom-scrollbar bg-white/40"
       >
+        {historyLoading && (
+          <div className="text-center text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+            Loading previous messages...
+          </div>
+        )}
         {messages.map((msg) => (
           <div 
             key={msg.id} 
@@ -311,7 +458,15 @@ export default function WidgetEmbedClient({ storeId, embedded = false }: Props) 
                       {msg.products.map((p) => (
                         <div 
                           key={p.id}
-                          onClick={() => p.url && window.open(p.url, '_blank')}
+                          onClick={() => {
+                            if (!p.url) return;
+                            void emitAnalyticsEvent({
+                              eventType: "product_click",
+                              conversationId,
+                              productId: p.id
+                            });
+                            window.open(p.url, "_blank");
+                          }}
                           className="flex w-52 shrink-0 flex-col rounded-2xl border border-slate-200 bg-white/90 backdrop-blur-sm p-2.5 shadow-sm transition-all hover:border-indigo-400 hover:shadow-xl hover:-translate-y-1 cursor-pointer group"
                         >
                           <div className="relative h-36 w-full overflow-hidden rounded-xl bg-slate-50">
