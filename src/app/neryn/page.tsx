@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { SimpleSettingsCenter } from "@/components/settings/SimpleSettingsCenter";
@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
-export default function NerynPage() {
+function NerynPageContent() {
   const [open, setOpen] = useState(false);
   const searchParams = useSearchParams();
   const [storeId, setStoreId] = useState("");
@@ -82,5 +82,19 @@ export default function NerynPage() {
         </DialogContent>
       </Dialog>
     </main>
+  );
+}
+
+export default function NerynPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen bg-[#f8fafc] p-6 md:p-10">
+        <div className="mx-auto w-full max-w-6xl rounded-2xl border border-slate-200 bg-white p-8 text-slate-500">
+          Loading settings...
+        </div>
+      </main>
+    }>
+      <NerynPageContent />
+    </Suspense>
   );
 }
