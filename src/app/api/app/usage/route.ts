@@ -3,6 +3,8 @@ import { z } from "zod";
 import { requireAppStoreMembership } from "@/lib/auth/app-api";
 import { getMonthlyUsage } from "@/lib/billing/usage-tracking";
 
+export const dynamic = "force-dynamic";
+
 const querySchema = z.object({
   storeId: z.string().min(1),
 });

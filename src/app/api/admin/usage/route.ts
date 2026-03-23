@@ -4,6 +4,8 @@ import { UserRole } from "@prisma/client";
 import { enforceAdminRole } from "@/lib/security/admin-api";
 import { getMonthlyUsage } from "@/lib/billing/usage-tracking";
 
+export const dynamic = "force-dynamic";
+
 const querySchema = z.object({
   storeId: z.string().min(1)
 });
