@@ -20,27 +20,35 @@ export function CTA() {
         <div className="md:w-1/2 relative z-10">
           <motion.h2 
             initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}
-            className="text-4xl md:text-5xl lg:text-[56px] font-bold text-white mb-6 leading-[1.1]"
+            className="text-4xl md:text-5xl lg:text-[52px] font-bold text-white mb-6 leading-[1.1]"
           >
-            Ready to scale your store?
+            Your store is open right now. Someone is browsing it. Give them a reason to buy.
           </motion.h2>
           <motion.p 
             initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}
             className="text-[18px] text-white/80 font-medium mb-10 max-w-sm leading-relaxed"
           >
-            Join 450+ Shopify brands using Neryn AI to automate sales and support.
+            14-day free trial. No credit card. Works in under 10 minutes.
           </motion.p>
-          <motion.button 
-            initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
-            whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-            onClick={() => window.location.href = '/signup'}
-            className="group flex items-center gap-3 bg-white hover:bg-slate-50 text-slate-900 px-8 py-4 rounded-full text-[15px] font-bold transition-all shadow-xl"
-          >
-            Start 7-Day Free Trial
-            <span className="bg-slate-900 text-white p-1.5 rounded-full flex items-center justify-center transition-transform group-hover:translate-x-1">
-                <ArrowRight size={14} className="-rotate-45" strokeWidth={3} />
-            </span>
-          </motion.button>
+          <div className="flex flex-col items-start gap-4">
+            <motion.button 
+              initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
+              whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+              onClick={() => window.location.href = '/signup'}
+              className="group flex items-center gap-3 bg-white hover:bg-slate-50 text-slate-900 px-8 py-4 rounded-full text-[15px] font-bold transition-all shadow-xl"
+            >
+              Start Free Trial
+              <span className="bg-slate-900 text-white p-1.5 rounded-full flex items-center justify-center transition-transform group-hover:translate-x-1">
+                  <ArrowRight size={14} className="-rotate-45" strokeWidth={3} />
+              </span>
+            </motion.button>
+            <motion.p 
+              initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ delay: 0.5 }}
+              className="text-xs font-bold text-white/50 uppercase tracking-[0.2em] ml-2"
+            >
+              Shopify · WooCommerce · BigCommerce
+            </motion.p>
+          </div>
         </div>
 
         {/* Right Phone Mockup */}
@@ -57,8 +65,8 @@ export function CTA() {
               
               <div className="px-6 flex justify-between items-start mb-8">
                  <div>
-                     <h3 className="text-[28px] font-bold text-slate-900 leading-tight">Workspace</h3>
-                     <p className="text-[13px] text-slate-500 font-medium mt-1">Enterprise Agent Active</p>
+                     <h3 className="text-[28px] font-bold text-slate-900 leading-tight">Store Assistant</h3>
+                     <p className="text-[13px] text-slate-500 font-medium mt-1">ShopBot is live on your storefront</p>
                  </div>
                  <img 
                     src="https://images.unsplash.com/photo-1755519024827-fd05075a7200?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwZXJzb24lMjBhdmF0YXIlMjBwcm9mZXNzaW9uYWx8ZW58MXx8fHwxNzczNDQwMDY4fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral" 
@@ -71,20 +79,20 @@ export function CTA() {
                      <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm">
                          <Sparkles size={16} className="text-blue-600" />
                      </div>
-                     <div className="font-bold text-slate-800 text-[15px] leading-tight">Data<br/>Sync<br/>Query</div>
+                     <div className="font-bold text-slate-800 text-[15px] leading-tight">Recommend<br/>Products<br/>Live</div>
                  </motion.div>
                  <div className="space-y-3 flex flex-col h-full">
                      <motion.div whileHover={{ scale: 1.02 }} className="bg-white p-5 rounded-3xl flex-1 flex flex-col items-start justify-between border border-slate-200/60 shadow-sm">
                          <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center shadow-sm mb-2">
                             <Plus size={14} className="text-slate-600" />
                          </div>
-                         <div className="font-bold text-slate-800 text-[13px] leading-tight">Generate<br/>Report</div>
+                         <div className="font-bold text-slate-800 text-[13px] leading-tight">Add to<br/>Cart</div>
                      </motion.div>
                      <motion.div whileHover={{ scale: 1.02 }} className="bg-slate-50 p-5 rounded-3xl flex-1 flex flex-col items-start justify-between border border-slate-200/60 shadow-sm">
                          <div className="w-8 h-8 rounded-full bg-white border border-slate-100 flex items-center justify-center shadow-sm mb-2">
                             <Plus size={14} className="text-slate-600" />
                          </div>
-                         <div className="font-bold text-slate-800 text-[13px] leading-tight">Metric<br/>Dashboard</div>
+                         <div className="font-bold text-slate-800 text-[13px] leading-tight">Answer<br/>Questions</div>
                      </motion.div>
                  </div>
               </div>
@@ -95,7 +103,7 @@ export function CTA() {
                       <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-sm text-blue-600 border border-slate-100">
                           <Plus size={18} />
                       </div>
-                      <div className="flex-1 px-3 text-[14px] text-slate-400 font-medium">Query database...</div>
+                      <div className="flex-1 px-3 text-[14px] text-slate-400 font-medium">Ask about products...</div>
                       <div className="w-9 h-9 bg-[#0f172a] rounded-full flex items-center justify-center text-white">
                           <Mic size={16} />
                       </div>

@@ -80,13 +80,13 @@ export default function LoginPage() {
       <AuthShell
         title="Verifying Session"
         subtitle="Accessing your merchant dashboard, onboarding flow, and sales analytics."
-        sideTitle="Enterprise-grade AI sales operations"
-        sideBody="Secure authentication, Shopify-integrated onboarding, and high-visibility conversion workflows."
+        sideTitle="Welcome back to Neryn"
+        sideBody="Secure sign in for your merchant dashboard, onboarding flow, and sales insights."
       >
         <Card className="w-full max-w-md mx-auto">
           <CardContent className="flex items-center justify-center py-16">
             <div className="flex items-center gap-3">
-              <div className="w-5 h-5 border-2 border-blue-600/20 border-t-blue-600 rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-[#0078D4]/20 border-t-[#0078D4] rounded-full animate-spin" />
               <span className="text-sm text-slate-600">Checking authentication...</span>
             </div>
           </CardContent>
@@ -99,11 +99,11 @@ export default function LoginPage() {
     <AuthShell
       title="Sign in to your workspace"
       subtitle="Access your merchant dashboard, onboarding flow, and sales analytics."
-      sideTitle="Enterprise-grade AI sales operations"
-      sideBody="Secure authentication, Shopify-integrated onboarding, and high-visibility conversion workflows for fast-moving commerce teams."
+      sideTitle="Welcome back to Neryn"
+      sideBody="Secure sign in for your merchant dashboard, onboarding flow, and sales insights."
     >
-      <form onSubmit={onSubmit} className="space-y-3">
-        <Input type="email" placeholder="Work email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+      <form onSubmit={onSubmit} className="space-y-4">
+        <Input type="email" placeholder="Work email" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-11 rounded-xl border-slate-300 bg-white" />
         <div className="relative">
           <Input
             type={showPassword ? "text" : "password"}
@@ -111,7 +111,7 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="pr-10"
+            className="h-11 rounded-xl border-slate-300 bg-white pr-10"
           />
           <button
             type="button"
@@ -124,22 +124,22 @@ export default function LoginPage() {
         </div>
 
         <div className="flex items-center justify-between">
-          <Link href="/forgot-password" className="text-sm text-blue-600 hover:text-blue-500">
+          <Link href="/forgot-password" className="text-sm text-[#0078D4] hover:text-[#106EBE]">
             Forgot your password?
           </Link>
         </div>
 
-        <Button type="submit" className="w-full" disabled={loading}>{loading ? "Signing in..." : "Sign In"}</Button>
+        <Button type="submit" className="h-11 w-full rounded-xl bg-[#0078D4] text-white hover:bg-[#106EBE]" disabled={loading}>{loading ? "Signing in..." : "Sign In"}</Button>
       </form>
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
-        <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">Or</span></div>
+        <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-slate-400">Or</span></div>
       </div>
 
       <Button
         variant="outline"
-        className="w-full"
+        className="h-11 w-full rounded-xl border-slate-300 bg-white hover:bg-slate-50"
         onClick={() => {
           window.location.href = "/api/auth/google/start?next=/dashboard";
         }}
@@ -151,8 +151,8 @@ export default function LoginPage() {
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       {googleError ? <p className="text-sm text-destructive">Google login failed. Try again.</p> : null}
 
-      <p className="text-sm text-muted-foreground">
-        New user? <a className="font-medium text-foreground underline underline-offset-4" href="/signup">Create an account</a>
+      <p className="text-sm text-slate-500">
+        New user? <a className="font-medium text-slate-900 underline underline-offset-4" href="/signup">Create an account</a>
       </p>
     </AuthShell>
   );

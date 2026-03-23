@@ -34,10 +34,10 @@ export function Integrations() {
           viewport={{ once: true }}
           className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 mb-8 leading-tight"
         >
-          Integrate with your data stack
+          Plugs into the tools you already use.
         </motion.h2>
         <p className="text-xl text-slate-500 font-medium max-w-2xl mx-auto mb-10">
-          Seamlessly connect our Neryn AI models to your existing data infrastructure.
+          Launch quickly with ecommerce-native integrations your team already knows.
         </p>
         <div className="flex flex-wrap justify-center gap-4 md:gap-8 mb-4">
           {["Data Warehouses", "Internal APIs", "Vector Databases", "Identity Providers"].map((tool, i) => (
@@ -48,7 +48,7 @@ export function Integrations() {
           ))}
         </div>
         <p className="text-sm font-bold text-blue-600 mt-6 uppercase tracking-widest">
-          Secure. Fast. Reliable.
+          Ecommerce-ready. Fast. Reliable.
         </p>
       </div>
 
@@ -105,7 +105,7 @@ export function Integrations() {
         whileTap={{ scale: 0.95 }}
         className="group flex items-center gap-3 bg-white border border-slate-200/60 hover:bg-slate-50 text-slate-800 px-8 py-4 rounded-full text-[15px] font-bold transition-all shadow-md hover:shadow-lg"
       >
-        Explore All Connectors
+        Explore Integrations
         <span className="bg-[#0f172a] text-white p-1.5 rounded-full flex items-center justify-center transition-transform group-hover:translate-x-1">
             <ArrowRight size={14} className="-rotate-45" strokeWidth={3} />
         </span>

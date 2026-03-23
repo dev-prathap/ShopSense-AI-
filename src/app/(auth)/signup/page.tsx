@@ -68,7 +68,7 @@ export default function SignupPage() {
       return;
     }
 
-    router.push("/dashboard");
+    router.push("/onboarding/welcome");
     router.refresh();
   }
 
@@ -84,7 +84,7 @@ export default function SignupPage() {
         <Card className="w-full max-w-md mx-auto">
           <CardContent className="flex items-center justify-center py-16">
             <div className="flex items-center gap-3">
-              <div className="w-5 h-5 border-2 border-blue-600/20 border-t-blue-600 rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-[#0078D4]/20 border-t-[#0078D4] rounded-full animate-spin" />
               <span className="text-sm text-slate-600">Checking authentication...</span>
             </div>
           </CardContent>
@@ -98,11 +98,11 @@ export default function SignupPage() {
       title="Create your account"
       subtitle="Start your Shopify AI sales onboarding in minutes."
       sideTitle="Deploy faster, convert sooner"
-      sideBody="Bring your catalog, policies, and FAQ into one guided onboarding flow built for conversion-focused commerce teams."
+      sideBody="Bring your catalog, policies, and FAQs into one guided onboarding flow for modern commerce teams."
     >
-      <form onSubmit={onSubmit} className="space-y-3">
-        <Input placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)} required />
-        <Input type="email" placeholder="Work email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+      <form onSubmit={onSubmit} className="space-y-4">
+        <Input placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)} required className="h-11 rounded-xl border-slate-300 bg-white" />
+        <Input type="email" placeholder="Work email" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-11 rounded-xl border-slate-300 bg-white" />
         <div className="relative">
           <Input
             type={showPassword ? "text" : "password"}
@@ -111,7 +111,7 @@ export default function SignupPage() {
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={8}
-            className="pr-10"
+            className="h-11 rounded-xl border-slate-300 bg-white pr-10"
           />
           <button
             type="button"
@@ -122,19 +122,19 @@ export default function SignupPage() {
             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
         </div>
-        <Button type="submit" className="w-full" disabled={loading}>{loading ? "Creating account..." : "Create Account"}</Button>
+        <Button type="submit" className="h-11 w-full rounded-xl bg-[#0078D4] text-white hover:bg-[#106EBE]" disabled={loading}>{loading ? "Creating account..." : "Create Account"}</Button>
       </form>
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
-        <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">Or</span></div>
+        <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-slate-400">Or</span></div>
       </div>
 
       <Button
         variant="outline"
-        className="w-full"
+        className="h-11 w-full rounded-xl border-slate-300 bg-white hover:bg-slate-50"
         onClick={() => {
-          window.location.href = "/api/auth/google/start?next=/dashboard";
+          window.location.href = "/api/auth/google/start?next=/onboarding/welcome";
         }}
       >
         <GoogleIcon />
@@ -143,8 +143,8 @@ export default function SignupPage() {
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
-      <p className="text-sm text-muted-foreground">
-        Already have an account? <a className="font-medium text-foreground underline underline-offset-4" href="/login">Sign in</a>
+      <p className="text-sm text-slate-500">
+        Already have an account? <a className="font-medium text-slate-900 underline underline-offset-4" href="/login">Sign in</a>
       </p>
     </AuthShell>
   );

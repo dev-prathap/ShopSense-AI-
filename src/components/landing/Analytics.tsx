@@ -4,10 +4,10 @@ import { ArrowRight, CheckCircle2 } from "lucide-react";
 
 export function Analytics() {
   const badges = [
-    "Conversation analytics",
-    "User intent tracking",
-    "Performance reports",
-    "Actionable insights"
+    "Top shopper queries",
+    "Chat-to-cart tracking",
+    "Catalog gap detection",
+    "Weekly summary reports"
   ];
 
   const chartData = [30, 45, 25, 60, 40, 75, 50, 85, 90]; 
@@ -49,20 +49,20 @@ export function Analytics() {
               initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 }}
               className="text-4xl md:text-[52px] font-bold text-slate-900 mb-8 leading-[1.1]"
             >
-              Turn complex data into clear strategic action
+              Results stores are already seeing
             </motion.h2>
             <motion.p 
               initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: 0.3 }}
               className="text-[18px] text-slate-500 font-medium mb-12 leading-relaxed max-w-md"
             >
-              Unify your company's knowledge. Give your team instant access to insights, metrics, and automated reports through a simple conversational interface.
+              Track the outcomes that matter to merchants: conversions, cart adds, top recommended products, and missed demand from shopper questions.
             </motion.p>
             <motion.button 
               initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.4 }}
               whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
               className="group flex items-center gap-3 bg-[#0f172a] hover:bg-[#1e293b] text-white px-8 py-4 rounded-full text-[15px] font-bold transition-all shadow-xl"
             >
-              Request Access
+              View Merchant Metrics
               <span className="bg-white/10 text-white p-1.5 rounded-full flex items-center justify-center transition-transform group-hover:translate-x-1">
                   <ArrowRight size={14} className="-rotate-45" strokeWidth={3} />
               </span>
@@ -78,9 +78,9 @@ export function Analytics() {
             <div className="flex justify-between items-start mb-10">
               <div>
                 <div className="flex items-center gap-2.5 text-slate-500 font-semibold text-[13px] mb-3">
-                  <span className="text-green-500 font-bold text-[15px]">↑</span> Revenue growth
+                  <span className="text-green-500 font-bold text-[15px]">↑</span> Avg. conversion lift
                 </div>
-                <div className="text-[48px] font-extrabold text-slate-900 tracking-tight leading-none">+380%</div>
+                <div className="text-[48px] font-extrabold text-slate-900 tracking-tight leading-none">+23%</div>
               </div>
               <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=32&h=32&fit=crop" className="w-12 h-12 rounded-full border border-slate-100 shadow-sm" />
             </div>
@@ -112,9 +112,9 @@ export function Analytics() {
 
             {/* X Axis Labels */}
             <div className="flex justify-between text-[12px] font-bold text-slate-400 mt-6 uppercase tracking-wider px-3">
-              <span>Feb</span>
-              <span>Mar</span>
-              <span>Apr</span>
+              <span>Week 1</span>
+              <span>Week 2</span>
+              <span>Week 3</span>
             </div>
           </motion.div>
 

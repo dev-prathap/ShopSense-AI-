@@ -1,37 +1,56 @@
 "use client";
-import { useState } from "react";
 import { motion } from "motion/react";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 
 export function Pricing() {
-  const [isAnnual, setIsAnnual] = useState(false);
-
   const plans = [
     {
-      name: "Neryn Bot AI",
-      tag: "Sales Bot",
-      desc: "LLM-powered product discovery and cart assistant embedded on your storefront.",
-      price: "$100",
+      name: "Neryn Assist",
+      tag: "Sales Assistant",
+      desc: "Your store's always-on sales rep. It chats, recommends the right product, and gets it into the cart.",
+      price: "$49",
       period: "/month",
-      features: ["Live product catalog sync", "Intent-based recommendations", "In-chat cart add", "Brand tone customisation", "Shopify/WooCommerce/BigCommerce"],
+      subPrice: "Flat rate. No usage limits. Cancel anytime.",
+      features: [
+        "One-click install on Shopify, WooCommerce or BigCommerce",
+        "Reads what shoppers mean, not just what they type",
+        "Always in sync with your live prices, stock and variants",
+        "Adds products to cart inside the chat, no page reload",
+        "Speaks in your brand's tone, not a generic bot voice",
+      ],
       highlight: true
     },
     {
-      name: "SearchSync",
-      tag: "Visibility",
-      desc: "Get found on Google and inside AI search engines like ChatGPT & Perplexity.",
-      price: "Custom",
-      period: "",
-      features: ["Technical SEO & Product Schema", "AI search optimisation (GEO/AEO)", "Brand citation strategy", "Monthly visibility reporting", "Sitemap injection"],
+      name: "Neryn Manage",
+      tag: "Store Manager",
+      desc: "Everything in Assist, plus a clear view of what shoppers are asking, what's running low, and what's converting.",
+      price: "$129",
+      period: "/month",
+      subPrice: "Includes everything in Neryn Assist.",
+      features: [
+        "Everything in Neryn Assist",
+        "Low stock alerts before items get recommended and disappoint",
+        "Live feed of every question shoppers are typing right now",
+        "Spots catalog gaps from questions that got no match",
+        "Conversion dashboard showing chat-to-cart rate and AOV impact",
+        "Weekly summary in your inbox every Monday morning",
+      ],
       highlight: false
     },
     {
-      name: "SupportDesk AI",
-      tag: "Support",
-      desc: "AI support bot that resolves tickets, logs issues, and escalates to helpdesk.",
-      price: "Custom",
-      period: "",
-      features: ["Integration with Zendesk/Gorgias", "Auto-resolves returns & FAQs", "Smart human escalation", "CSAT tracking dashboard", "Order status automation"],
+      name: "Neryn Desk",
+      tag: "Customer Support",
+      desc: "Takes care of the repetitive support tickets so your team only deals with the ones that actually need them.",
+      price: "$79",
+      period: "/month",
+      subPrice: "Works standalone or alongside any Neryn plan.",
+      features: [
+        "Auto-resolves returns, order status, refund questions and FAQs",
+        "Logs and tags tickets straight into Zendesk or Gorgias",
+        "Hands off to your team when a ticket needs a real person",
+        "Slack digest every morning with ticket count and resolution rate",
+        "Customers rate the resolution automatically after each close",
+      ],
       highlight: false
     }
   ];
@@ -42,41 +61,11 @@ export function Pricing() {
         initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
         className="text-4xl md:text-5xl lg:text-6xl font-bold text-center text-slate-900 mb-12 max-w-2xl leading-tight"
       >
-        Predictable pricing for enterprise teams
+        Predictable pricing for growing ecommerce stores
       </motion.h2>
 
-      {/* Animated Toggle */}
-      <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} className="bg-slate-100/80 p-1.5 rounded-full flex items-center mb-20 relative backdrop-blur-sm border border-slate-200/50">
-        {['Monthly', 'Annual'].map((tab) => {
-          const isActive = tab === 'Annual' ? isAnnual : !isAnnual;
-          return (
-            <button
-              key={tab}
-              onClick={() => setIsAnnual(tab === 'Annual')}
-              className={`relative z-10 px-8 py-3 rounded-full text-[15px] font-bold transition-colors flex items-center gap-2 outline-none ${
-                isActive ? 'text-white' : 'text-slate-500 hover:text-slate-800'
-              }`}
-            >
-              {isActive && (
-                <motion.div
-                  layoutId="pricing-active-tab"
-                  className="absolute inset-0 bg-[#0f172a] rounded-full shadow-md"
-                  transition={{ type: 'spring', bounce: 0.25, duration: 0.6 }}
-                />
-              )}
-              <span className="relative z-10">{tab}</span>
-              {tab === 'Annual' && (
-                <span className={`relative z-10 text-[11px] px-2 py-0.5 rounded-full transition-colors duration-300 ${isActive ? 'bg-white/20 text-white' : 'bg-green-100 text-green-700'}`}>
-                  -20%
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </motion.div>
-
       {/* Pricing Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-6xl perspective-1000">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-6xl perspective-1000 mt-8">
         {plans.map((plan, i) => (
           <motion.div 
             key={i}
@@ -93,7 +82,7 @@ export function Pricing() {
           >
             {plan.highlight && (
               <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[11px] font-bold uppercase tracking-widest px-5 py-2 rounded-full shadow-md">
-                Enterprise Choice
+                Most Popular
               </div>
             )}
             
@@ -109,15 +98,16 @@ export function Pricing() {
               <span className="text-[44px] font-extrabold text-slate-900 tracking-tight">{plan.price}</span>
               <span className="text-[15px] font-semibold text-slate-400">{plan.period}</span>
             </div>
+            <p className="text-[13px] text-slate-500 font-semibold mb-8 leading-relaxed">{plan.subPrice}</p>
 
             <a 
-              href={plan.price === 'Custom' ? "mailto:hello@yourdomain.com" : "/signup"}
+              href="/signup"
               className={`group w-full flex items-center justify-center gap-3 py-4 rounded-full text-[15px] font-bold transition-all mb-10 ${
               plan.highlight 
                 ? 'bg-[#0f172a] text-white hover:bg-black shadow-lg hover:shadow-xl' 
                 : 'bg-slate-50 border border-slate-200/60 text-slate-800 hover:bg-slate-100 shadow-sm'
             }`}>
-              {plan.price === 'Custom' ? 'Contact Sales' : 'Start Trial'}
+              Start Free Trial
               <span className={`p-1.5 rounded-full flex items-center justify-center transition-transform group-hover:translate-x-1 ${plan.highlight ? 'bg-white/10 text-white' : 'bg-slate-900 text-white'}`}>
                   <ArrowRight size={14} className="-rotate-45" strokeWidth={3} />
               </span>

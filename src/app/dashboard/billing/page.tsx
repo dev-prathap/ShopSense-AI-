@@ -7,70 +7,71 @@ import { Button } from "@/components/ui/button";
 import { AppShell } from "@/components/app/AppShell";
 import { PageHeader } from "@/components/app/PageHeader";
 import { SubscribeButton } from "@/components/app/billing/SubscribeButton";
-import { Check, X, ArrowRight, Zap, Search, LifeBuoy, ShieldCheck } from "lucide-react";
+import { Check, X, Zap, Search, LifeBuoy, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default async function BillingPage({ searchParams }: { searchParams: { storeId?: string, success?: string, canceled?: string } }) {
   const { storeId } = await validateStoreAccess(searchParams.storeId);
   const subscription = await prisma.billingSubscription.findUnique({ where: { storeId } });
+  const trialProductId = process.env.CREEM_PRODUCT_ID_SHOPBOT || "custom";
 
   const products = [
     {
-      id: "shopbot",
-      name: "Neryn Bot AI",
-      tag: "Sales Bot",
-      description: "LLM-powered product discovery and cart assistant embedded on your storefront.",
-      price: "$100",
+      id: "assist",
+      name: "Neryn Assist",
+      tag: "Sales Assistant",
+      description: "Always-on sales rep for product discovery, recommendations, and in-chat cart actions.",
+      price: "$49",
       priceNote: "/month",
-      subNote: "Flat fee. No usage caps.",
+      subNote: "7-day trial available. Cancel anytime.",
       features: [
         "Shopify, WooCommerce & BigCommerce",
         "Live product catalog sync",
-        "Intent-based recommendations",
+        "Intent-aware recommendations",
         "In-chat cart add",
-        "Brand tone customisation"
+        "Brand tone customization"
       ],
-      cta: subscription?.active ? "Active" : "Start Free Trial",
+      cta: subscription?.active ? "Active" : "Start 7-Day Trial",
       popular: true,
       icon: <Zap className="h-5 w-5 text-indigo-500" />,
       color: "border-indigo-500 ring-indigo-500/20 ring-1"
     },
     {
-      id: "searchsync",
-      name: "SearchSync",
-      tag: "Visibility",
-      description: "Get found on Google and inside AI answers — ChatGPT, Perplexity, Google AI Overviews.",
-      price: "Custom",
-      priceNote: "",
-      subNote: "Scoped per store size and catalog depth.",
+      id: "manage",
+      name: "Neryn Manage",
+      tag: "Store Manager",
+      description: "Everything in Assist, plus operations visibility and conversion analytics.",
+      price: "$129",
+      priceNote: "/month",
+      subNote: "Includes everything in Neryn Assist.",
       features: [
-        "Technical SEO audit & fixes",
-        "Product schema & structured data",
-        "AI search optimisation (GEO/AEO)",
-        "Brand citation strategy for LLMs",
-        "Monthly visibility reporting"
+        "Everything in Neryn Assist",
+        "Low stock alerts",
+        "Live shopper question feed",
+        "Catalog gap detection",
+        "Conversion dashboard + weekly summary"
       ],
-      cta: "Contact Sales",
+      cta: subscription?.active ? "Active" : "Start 7-Day Trial",
       popular: false,
       icon: <Search className="h-5 w-5 text-blue-500" />,
       color: "border-slate-200"
     },
     {
-      id: "supportdesk",
-      name: "SupportDesk AI",
-      tag: "Support",
-      description: "An AI-first support bot that resolves tickets, logs issues, and escalates — plugged into your helpdesk.",
-      price: "Custom",
-      priceNote: "",
-      subNote: "Tiered by monthly ticket volume.",
+      id: "desk",
+      name: "Neryn Desk",
+      tag: "Customer Support",
+      description: "Handles repetitive support tickets with smart escalation to your team.",
+      price: "$79",
+      priceNote: "/month",
+      subNote: "Works standalone or alongside any Neryn plan.",
       features: [
-        "Zendesk, Gorgias & Freshdesk integration",
-        "Auto-resolves returns, FAQs, order status",
-        "Smart escalation to human agents",
-        "Ticket logging & tagging",
-        "CSAT tracking dashboard"
+        "Auto-resolves returns, order status, and FAQs",
+        "Zendesk / Gorgias ticket logging",
+        "Smart handoff to human agents",
+        "Daily support digest",
+        "Resolution quality tracking"
       ],
-      cta: "Contact Sales",
+      cta: subscription?.active ? "Active" : "Start 7-Day Trial",
       popular: false,
       icon: <LifeBuoy className="h-5 w-5 text-emerald-500" />,
       color: "border-slate-200"
@@ -171,7 +172,7 @@ export default async function BillingPage({ searchParams }: { searchParams: { st
                 <div className="mt-auto">
                    <SubscribeButton 
                     storeId={storeId}
-                    productId={product.id === "shopbot" ? "prod_8XT58mOgy3zGPM66cZm0E" : "custom"}
+                    productId={trialProductId}
                     label={product.cta}
                     variant={product.popular ? "default" : "outline"}
                     className={cn(

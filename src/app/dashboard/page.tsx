@@ -64,7 +64,7 @@ export default async function DashboardPage({
   });
 
   if (memberships.length === 0) {
-    redirect("/dashboard/connect");
+    redirect("/onboarding/welcome");
   }
 
   const mappedStoreId = memberships[0].store.id;

@@ -9,13 +9,15 @@ export function AuthShell(props: {
   sideBody: string;
 }) {
   return (
-    <main className="grid min-h-screen md:grid-cols-2">
-      <section className="relative hidden bg-linear-to-br from-slate-950 via-slate-900 to-indigo-950 p-16 text-white md:flex md:flex-col md:justify-between lg:p-24">
+    <main className="grid min-h-screen bg-white text-slate-900 md:grid-cols-2">
+      <section className="relative hidden overflow-hidden border-r border-[#c7e0f4] bg-linear-to-br from-[#edf6fc] via-[#f7fbff] to-white p-16 text-slate-900 md:flex md:flex-col md:justify-between lg:p-24">
+        <div className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-[#0078D4]/22 blur-3xl animate-[spin_22s_linear_infinite]" />
+        <div className="pointer-events-none absolute -bottom-28 -right-20 h-80 w-80 rounded-full bg-[#50a9f8]/24 blur-3xl animate-[spin_30s_linear_infinite_reverse]" />
         <div className="space-y-8">
-          <Badge className="w-fit bg-white/20 px-4 py-1 text-sm text-white hover:bg-white/20">AI Sales Agent</Badge>
+          <Badge className="w-fit border border-[#b4d6f3] bg-[#e5f1fb] px-4 py-1 text-sm text-[#005a9e] hover:bg-[#e5f1fb]">AI Sales Agent</Badge>
           <div className="space-y-4">
             <h2 className="text-5xl font-extrabold tracking-tight leading-tight lg:text-7xl">{props.sideTitle}</h2>
-            <p className="max-w-lg text-xl text-white/70 leading-relaxed">{props.sideBody}</p>
+            <p className="max-w-lg text-xl text-slate-600 leading-relaxed">{props.sideBody}</p>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-6">
@@ -25,7 +27,7 @@ export function AuthShell(props: {
             { label: "RBAC + JWT sessions", icon: "🔐" },
             { label: "24/7 sales agent", icon: "🤖" }
           ].map((item) => (
-            <div key={item.label} className="group flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-md transition-all hover:border-white/20 hover:bg-white/10">
+            <div key={item.label} className="group flex items-center gap-3 rounded-2xl border border-[#d7e9f8] bg-white/85 p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#0078D4]/40 hover:shadow-md">
               <span className="text-2xl">{item.icon}</span>
               <span className="text-sm font-medium">{item.label}</span>
             </div>
@@ -33,14 +35,14 @@ export function AuthShell(props: {
         </div>
       </section>
 
-      <section className="flex items-center justify-center bg-card p-12 md:p-16 lg:p-24">
+      <section className="relative flex items-center justify-center overflow-hidden bg-[#f8fafc] p-12 md:p-16 lg:p-24">
         <div className="w-full max-w-lg space-y-10">
           <div className="space-y-4">
-            <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl">{props.title}</h1>
-            <p className="text-xl text-muted-foreground">{props.subtitle}</p>
+            <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 lg:text-5xl">{props.title}</h1>
+            <p className="text-xl text-slate-500">{props.subtitle}</p>
           </div>
-          <div className="rounded-3xl border bg-card/50 p-1 backdrop-blur-sm">
-            <div className="space-y-8 p-1">
+          <div className="rounded-3xl border border-slate-200 bg-white p-2 shadow-[0_14px_40px_rgba(15,23,42,0.06)]">
+            <div className="space-y-8 p-3 md:p-4">
               {props.children}
             </div>
           </div>

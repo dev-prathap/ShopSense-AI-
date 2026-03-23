@@ -9,7 +9,6 @@ export const REQUIRED_WEBHOOK_TOPICS = [
   "CUSTOMERS_UPDATE",
   "PRODUCTS_CREATE",
   "PRODUCTS_UPDATE",
-  "INVENTORY_LEVELS_UPDATE",
   "ORDERS_CREATE",
   "ORDERS_UPDATED"
 ] as const;
@@ -34,6 +33,20 @@ function getWebhookCallbackUrl(): string {
 
 export async function ensureShopifyWebhooks(input: { shopDomain: string; accessToken: string }) {
   const callbackUrl = getWebhookCallbackUrl();
+  // Shopify webhook callbacks must be publicly reachable over HTTPS.
+  if (!callbackUrl.startsWith("https://")) {
+    return {
+      callbackUrl,
+      created: [] as string[],
+      skipped: [] as string[],
+      errors: [
+        {
+          topic: "ALL",
+          message: "webhook_callback_must_be_https"
+        }
+      ]
+    };
+  }
 
   const existing = await shopifyGraphQL<{
     webhookSubscriptions: {

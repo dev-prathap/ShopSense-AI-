@@ -70,11 +70,26 @@ export default function WidgetEmbedClient({ storeId, embedded = false }: Props) 
   const [error, setError] = useState<string>("");
   const [sessionStarted, setSessionStarted] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const isSubscriptionMissing = error === "subscription_missing";
+  const friendlyErrorMessage = isSubscriptionMissing
+    ? "Assistant is getting things ready. Please ask the store team to activate billing, then try again."
+    : error;
 
   const quickActions = useMemo(
     () => ["Best sellers", "Shipping info", "Return policy", "Order status"],
     []
   );
+
+  function handleErrorAction() {
+    if (isSubscriptionMissing) {
+      window.open(`/dashboard/billing?storeId=${encodeURIComponent(storeId)}`, "_blank");
+      return;
+    }
+
+    ensureSessionToken(true).catch((e) => {
+      setError(e instanceof Error ? e.message : "session_failed");
+    });
+  }
 
   async function ensureSessionToken(force = false) {
     const now = Date.now();
@@ -366,9 +381,24 @@ export default function WidgetEmbedClient({ storeId, embedded = false }: Props) 
       {/* Footer / Input */}
       <div className="border-t bg-white p-5 shadow-[0_-10px_40px_rgba(0,0,0,0.02)]">
         {error && (
-          <div className="mb-4 flex items-center justify-between rounded-xl border border-red-100 bg-red-50/50 px-4 py-2.5 text-[11px] font-bold text-red-600 animate-in slide-in-from-bottom-2">
-            <span>{error}</span>
-            <button onClick={() => ensureSessionToken(true)} className="underline uppercase tracking-widest text-[10px]">Retry</button>
+          <div
+            className={cn(
+              "mb-4 flex items-center justify-between rounded-xl px-4 py-2.5 text-[11px] font-semibold animate-in slide-in-from-bottom-2",
+              isSubscriptionMissing
+                ? "border border-slate-200 bg-slate-50 text-slate-600"
+                : "border border-red-100 bg-red-50/50 text-red-600"
+            )}
+          >
+            <span>{friendlyErrorMessage}</span>
+            <button
+              onClick={handleErrorAction}
+              className={cn(
+                "uppercase tracking-widest text-[10px]",
+                isSubscriptionMissing ? "text-slate-500 hover:text-slate-700" : "underline"
+              )}
+            >
+              {isSubscriptionMissing ? "Renew" : "Retry"}
+            </button>
           </div>
         )}
         <div className="relative group">

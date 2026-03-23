@@ -7,7 +7,6 @@ import { Features } from "@/components/landing/Features";
 import { Integrations } from "@/components/landing/Integrations";
 import { Analytics } from "@/components/landing/Analytics";
 import { Pricing } from "@/components/landing/Pricing";
-import { Testimonials } from "@/components/landing/Testimonials";
 import { FAQ } from "@/components/landing/FAQ";
 import { CTA } from "@/components/landing/CTA";
 import { Footer } from "@/components/landing/Footer";
@@ -22,7 +21,6 @@ export default async function LandingPage() {
       <Integrations />
       <Analytics />
       <Pricing />
-      <Testimonials />
       <FAQ />
       <CTA />
       <Footer />

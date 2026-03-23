@@ -37,11 +37,10 @@ export function Header() {
         </a>
 
         <nav className="hidden md:flex items-center gap-10 text-[15px] font-semibold">
-          <a href="#" className="transition-colors text-slate-700 hover:text-blue-600">Solutions</a>
-          <a href="#" className="transition-colors text-slate-700 hover:text-blue-600">Platform</a>
-          <a href="#" className="transition-colors text-slate-700 hover:text-blue-600">Security</a>
-          <a href="/pricing" className="transition-colors text-slate-700 hover:text-blue-600">Pricing</a>
-          <a href="#" className="transition-colors text-slate-700 hover:text-blue-600">Resources</a>
+          <a href="#how-it-works" className="transition-colors text-slate-700 hover:text-blue-600">How It Works</a>
+          <a href="#pricing" className="transition-colors text-slate-700 hover:text-blue-600">Pricing</a>
+          <a href="#integrations" className="transition-colors text-slate-700 hover:text-blue-600">Integrations</a>
+          <a href="#faq" className="transition-colors text-slate-700 hover:text-blue-600">FAQ</a>
         </nav>
 
         <button className="hidden md:flex items-center gap-2.5 px-7 py-3.5 rounded-full text-[14px] font-bold transition-all shadow-md hover:scale-105 group bg-[#0f172a] text-white hover:bg-black" onClick={() => window.location.href = '/signup'}>

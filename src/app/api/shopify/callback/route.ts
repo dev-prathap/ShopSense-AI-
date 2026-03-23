@@ -110,12 +110,17 @@ export async function GET(req: NextRequest) {
   });
 
   if (webhooks.errors.length > 0) {
-    await enqueueRetryJob({
-      storeId: store.id,
-      type: "ENSURE_WEBHOOKS",
-      payload: { source: "oauth_callback_partial" },
-      errorMessage: JSON.stringify(webhooks.errors)
-    });
+    const isDevHttpsConstraint = webhooks.errors.some(
+      (err) => err.message === "webhook_callback_must_be_https"
+    );
+    if (!isDevHttpsConstraint) {
+      await enqueueRetryJob({
+        storeId: store.id,
+        type: "ENSURE_WEBHOOKS",
+        payload: { source: "oauth_callback_partial" },
+        errorMessage: JSON.stringify(webhooks.errors)
+      });
+    }
   }
 
   try {
