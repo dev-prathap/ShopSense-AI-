@@ -232,5 +232,14 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // GDPR/compliance topics must return 200 promptly after verification.
+  if (
+    topic === "customers/data_request" ||
+    topic === "customers/redact" ||
+    topic === "shop/redact"
+  ) {
+    return NextResponse.json({ ok: true, compliance: true });
+  }
+
   return NextResponse.json({ ok: true });
 }
