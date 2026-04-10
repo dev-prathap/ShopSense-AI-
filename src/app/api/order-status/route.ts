@@ -22,6 +22,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: auth.reason }, { status: 401 });
   }
 
+  const ORDER_CACHE_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours
+
   const cached = await prisma.orderCache.findFirst({
     where: {
       storeId,
@@ -30,7 +32,9 @@ export async function GET(req: NextRequest) {
     }
   });
 
-  if (!cached) {
+  const isStale = cached?.lastSyncedAt && (Date.now() - cached.lastSyncedAt.getTime() > ORDER_CACHE_TTL_MS);
+
+  if (!cached || isStale) {
     const store = await prisma.store.findUnique({ where: { id: storeId } });
     if (!store) {
       return NextResponse.json({ error: "Store not found" }, { status: 404 });

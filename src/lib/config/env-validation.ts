@@ -28,10 +28,6 @@ const envSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string().optional(),
   GOOGLE_REDIRECT_URI: z.string().url().optional(),
 
-  // Billing (optional for development)
-  CREEM_API_KEY: z.string().optional(),
-  CREEM_WEBHOOK_SECRET: z.string().min(16).optional(),
-
   // Node Environment
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
 });
@@ -103,9 +99,5 @@ export function validateProductionEnvironment(): void {
       console.warn(`⚠️  Production environment missing recommended variables: ${missing.join(", ")}`);
     }
 
-    // Validate billing integration is properly configured
-    if (env.CREEM_API_KEY && !env.CREEM_WEBHOOK_SECRET) {
-      console.warn("⚠️  CREEM_API_KEY is set but CREEM_WEBHOOK_SECRET is missing. Billing webhooks will be insecure.");
-    }
   }
 }

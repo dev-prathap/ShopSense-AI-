@@ -89,8 +89,8 @@ export async function retrieveProductsForQuery(storeId: string, message: string)
           });
         }
       }
-    } catch {
-      // Resilience fallback
+    } catch (err) {
+      console.error("[retrieval] Vector product search failed, using Prisma fallback:", err instanceof Error ? err.message : err);
     }
   }
 
@@ -154,7 +154,8 @@ export async function retrieveKnowledgeForQuery(storeId: string, message: string
       content: row.content,
       similarity: Number(row.similarity)
     }));
-  } catch {
+  } catch (err) {
+    console.error("[retrieval] Knowledge retrieval failed:", err instanceof Error ? err.message : err);
     return [];
   }
 }

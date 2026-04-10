@@ -5,9 +5,9 @@ import { shopifyGraphQL } from "@/lib/shopify/client";
 export type BillingTier = "STARTER" | "GROWTH" | "PRO";
 
 const PLAN_PRICE: Record<BillingTier, number> = {
-  STARTER: 19,
-  GROWTH: 49,
-  PRO: 99
+  STARTER: 49,
+  GROWTH: 79,
+  PRO: 129
 };
 
 export async function createShopifySubscription(input: {
@@ -23,7 +23,7 @@ export async function createShopifySubscription(input: {
       name: $name
       returnUrl: $returnUrl
       lineItems: [{ plan: { appRecurringPricingDetails: { price: { amount: $price, currencyCode: USD }, interval: EVERY_30_DAYS } } }]
-      test: true
+      test: ${process.env.NODE_ENV !== "production"}
     ) {
       userErrors {
         field

@@ -3,7 +3,9 @@ import OpenAI from "openai";
 import { ChatIntent } from "@/lib/ai/types";
 
 const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+  apiKey: process.env.OPENAI_API_KEY,
+  timeout: 15_000,       // 15s hard timeout
+  maxRetries: 1,
 });
 
 export async function classifyIntent(text: string): Promise<{ intent: ChatIntent; confidence: number }> {

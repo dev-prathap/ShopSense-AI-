@@ -17,8 +17,14 @@ export async function GET(req: NextRequest) {
   const expectedState = req.cookies.get("shopify_oauth_state")?.value;
   const pendingAppUserId = req.cookies.get("asa_pending_app_user_id")?.value;
 
+  const errorRedirect = (msg: string) => {
+    const url = new URL("/onboarding/connect", process.env.SHOPIFY_APP_URL || req.nextUrl.origin);
+    url.searchParams.set("error", msg);
+    return NextResponse.redirect(url.toString());
+  };
+
   if (!shop || !code || !state || state !== expectedState) {
-    return NextResponse.json({ error: "Invalid OAuth parameters" }, { status: 400 });
+    return errorRedirect("oauth_failed");
   }
 
   const sortedParams = new URLSearchParams(req.nextUrl.searchParams);
@@ -30,7 +36,7 @@ export async function GET(req: NextRequest) {
 
   const secret = process.env.SHOPIFY_API_SECRET || "";
   if (!verifyShopifyQueryHmac(message, hmac, secret)) {
-    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+    return errorRedirect("invalid_signature");
   }
 
   const { access_token } = await exchangeShopifyAccessToken(shop, code);
@@ -136,12 +142,24 @@ export async function GET(req: NextRequest) {
 
   // 4. Automate Chatbot Installation via ScriptTag
   const { ensureShopifyScriptTag } = await import("@/lib/shopify/client");
-  await ensureShopifyScriptTag(store.shopDomain, store.accessToken, store.id).catch(err => {
-    console.error(`[Shopify] Automatic script installation failed for ${store.shopDomain}:`, err);
-  });
+  try {
+    await ensureShopifyScriptTag(store.shopDomain, store.accessToken, store.id);
+  } catch (error) {
+    await enqueueRetryJob({
+      storeId: store.id,
+      type: "INSTALL_SCRIPT_TAG",
+      payload: { source: "oauth_callback" },
+      errorMessage: error instanceof Error ? error.message : "install_script_tag_failed"
+    });
+  }
 
   const redirect = new URL("/dashboard/wizard", process.env.SHOPIFY_APP_URL);
   redirect.searchParams.set("storeId", store.id);
+  // Pass host + shop so App Bridge can initialize correctly in embedded context
+  const hostParam = req.nextUrl.searchParams.get("host");
+  const shopParam = req.nextUrl.searchParams.get("shop");
+  if (hostParam) redirect.searchParams.set("host", hostParam);
+  if (shopParam) redirect.searchParams.set("shop", shopParam);
   if (webhooks.errors.length > 0) {
     redirect.searchParams.set("webhookStatus", "partial_failure");
   }

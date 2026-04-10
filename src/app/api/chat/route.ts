@@ -7,7 +7,7 @@ import { verifyWidgetAccess } from "@/lib/security/guards";
 import { consumeRateLimit } from "@/lib/security/rate-limit";
 import { assertStoreSubscriptionActive } from "@/lib/billing/guard";
 import { triggerHandoffNotification } from "@/lib/handoff/service";
-import { checkUsageLimits, trackMessageUsage } from "@/lib/billing/usage-tracking";
+import { checkUsageLimits } from "@/lib/billing/usage-tracking";
 
 const schema = z.object({
   storeId: z.string().min(1),
@@ -152,9 +152,6 @@ export async function POST(req: NextRequest) {
         : {}
     })
   ]);
-
-  // Track message usage for billing
-  await trackMessageUsage(storeId, assistantMessage.id);
 
   if (output.handoff.required && conversation.status !== "HANDOFF_REQUESTED") {
     await triggerHandoffNotification({

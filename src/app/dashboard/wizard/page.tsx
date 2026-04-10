@@ -131,6 +131,7 @@ function WizardPageContent() {
   const [isFinishing, setIsFinishing] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const [isProcessingCheckout, setIsProcessingCheckout] = useState(false);
+  const [billingError, setBillingError] = useState("");
 
   const hasInitialized = useRef(false);
   const confettiFired = useRef(false);
@@ -198,11 +199,15 @@ function WizardPageContent() {
   const handleStartTrial = async () => {
     if (!storeId) return;
     setIsProcessingCheckout(true);
+    setBillingError("");
     try {
       const res = await activateTrial(storeId);
       if (res.ok) { setCurrentStep("SUCCESS"); }
-    } catch (err) { console.error("Trial failed", err); }
-    finally { setIsProcessingCheckout(false); }
+      else { setBillingError("Trial activation failed. Please try again."); }
+    } catch (err) {
+      console.error("Trial failed", err);
+      setBillingError("Something went wrong. Please try again.");
+    } finally { setIsProcessingCheckout(false); }
   };
 
   const handlePaidCheckout = async () => {
@@ -475,9 +480,16 @@ function WizardPageContent() {
                 </Button>
               </div>
 
+              {billingError && (
+                <div className="flex items-start gap-3 px-4 py-3 bg-red-50 border border-red-100 rounded-xl">
+                  <AlertCircle size={15} className="text-red-500 mt-0.5 flex-shrink-0" />
+                  <p className="text-[13px] text-red-700 font-medium">{billingError}</p>
+                </div>
+              )}
+
               <div className="flex items-center justify-center gap-5">
                 <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400">
-                  <ShieldCheck size={13} className="text-emerald-500" /> Secured by Creem.io
+                  <ShieldCheck size={13} className="text-emerald-500" /> Secured by Shopify
                 </div>
                 <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400">
                   <CheckCircle2 size={13} className="text-emerald-500" /> Cancel anytime

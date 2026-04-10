@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,9 +33,19 @@ const PERMISSIONS = [
 
 export default function OnboardingConnectPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [shop, setShop] = useState("");
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const oauthError = searchParams.get("error");
+    if (oauthError === "oauth_failed") {
+      setError("Shopify authorization failed. Please try connecting again.");
+    } else if (oauthError === "invalid_signature") {
+      setError("Security verification failed. Please try connecting again.");
+    }
+  }, [searchParams]);
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     if (e.target.value.trim()) {

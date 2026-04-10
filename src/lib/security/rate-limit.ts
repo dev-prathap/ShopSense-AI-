@@ -30,8 +30,8 @@ export async function consumeRateLimit(input: { key: string; limit: number; wind
         remaining: Math.max(0, input.limit - count),
         resetAt: Date.now() + input.windowMs
       };
-    } catch {
-      // fallback to in-memory for resilience when Upstash is unavailable
+    } catch (err) {
+      console.warn("[rate-limit] Upstash unavailable, falling back to in-memory:", err instanceof Error ? err.message : err);
     }
   }
 

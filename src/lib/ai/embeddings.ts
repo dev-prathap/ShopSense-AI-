@@ -2,7 +2,11 @@ import "server-only";
 
 import OpenAI from "openai";
 
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+  timeout: 15_000,
+  maxRetries: 1,
+});
 
 export async function createEmbedding(text: string): Promise<number[] | null> {
   if (!process.env.OPENAI_API_KEY) {

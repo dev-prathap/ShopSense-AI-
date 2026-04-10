@@ -28,8 +28,19 @@ export async function validateStoreAccess(storeId?: string): Promise<StoreAccess
     redirect("/login");
   }
 
-  // Use demo store as fallback, but validate access
-  const actualStoreId = storeId || "demo-store";
+  if (!storeId) {
+    // No storeId provided — find user's first store or redirect to onboarding
+    const firstMembership = await prisma.appUserStoreMembership.findFirst({
+      where: { appUserId: session.sub },
+      select: { storeId: true }
+    });
+    if (firstMembership) {
+      redirect(`/dashboard?storeId=${firstMembership.storeId}`);
+    }
+    redirect("/onboarding/welcome");
+  }
+
+  const actualStoreId = storeId;
 
   // Check if user has membership to this store
   const membership = await prisma.appUserStoreMembership.findFirst({
@@ -77,7 +88,9 @@ export async function checkStoreAccess(storeId?: string): Promise<StoreAccessRes
     if (!session) return null;
     const actualUserId = session.sub;
 
-    const actualStoreId = storeId || "demo-store";
+    if (!storeId) return null;
+
+    const actualStoreId = storeId;
 
     const membership = await prisma.appUserStoreMembership.findFirst({
       where: {

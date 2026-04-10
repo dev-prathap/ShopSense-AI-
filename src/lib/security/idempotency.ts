@@ -21,8 +21,8 @@ export async function reserveIdempotencyKey(namespace: string, key: string | nul
     try {
       const created = await upstashSetNxWithExpiry(`${namespace}:${key}`, "1", Math.ceil(TTL_MS / 1000));
       return created ? { ok: true } : { ok: false, reason: "duplicate_request" };
-    } catch {
-      // fallback to in-memory for resilience when Upstash is unavailable
+    } catch (err) {
+      console.warn("[idempotency] Upstash unavailable, falling back to in-memory:", err instanceof Error ? err.message : err);
     }
   }
 

@@ -6,6 +6,7 @@ import { verifyShopifyHmac } from "@/lib/security/hmac";
 import { syncCatalog } from "@/lib/shopify/sync";
 import { enqueueRetryJob } from "@/lib/jobs/queue";
 import { applyInventoryDelta } from "@/lib/shopify/inventory";
+import { deleteShopifyScriptTag } from "@/lib/shopify/client";
 
 export async function POST(req: NextRequest) {
   const topic = req.headers.get("x-shopify-topic") || "";
@@ -17,6 +18,34 @@ export async function POST(req: NextRequest) {
   const secret = process.env.SHOPIFY_API_SECRET || "";
   if (!verifyShopifyHmac(body, hmac, secret)) {
     return NextResponse.json({ error: "Invalid HMAC" }, { status: 401 });
+  }
+
+  // GDPR mandatory compliance webhooks must respond even for unknown stores
+  const gdprTopics = ["customers/data_request", "customers/redact", "shop/redact"];
+  if (gdprTopics.includes(topic)) {
+    const store = await prisma.store.findUnique({ where: { shopDomain } });
+    if (store) {
+      if (topic === "customers/redact") {
+        const payload = JSON.parse(body) as {
+          customer?: { id?: number | string };
+          orders_to_redact?: Array<{ id: number | string }>;
+        };
+        const shopifyCustomerId = payload.customer?.id ? String(payload.customer.id) : null;
+        if (shopifyCustomerId) {
+          await prisma.customerCache.deleteMany({ where: { storeId: store.id, shopifyCustomerId } });
+        }
+        if (payload.orders_to_redact?.length) {
+          await prisma.orderCache.deleteMany({
+            where: { storeId: store.id, shopifyOrderId: { in: payload.orders_to_redact.map(o => String(o.id)) } }
+          });
+        }
+      }
+      if (topic === "shop/redact") {
+        await prisma.store.delete({ where: { id: store.id } }).catch(() => {});
+      }
+    }
+    // Always acknowledge GDPR webhooks, even for unknown stores
+    return NextResponse.json({ ok: true });
   }
 
   const store = await prisma.store.findUnique({ where: { shopDomain } });
@@ -46,6 +75,10 @@ export async function POST(req: NextRequest) {
       where: { id: store.id },
       data: { uninstalledAt: new Date() }
     });
+    // Remove widget script tag from storefront
+    await deleteShopifyScriptTag(store.shopDomain, store.accessToken, store.id).catch((err) =>
+      console.error("[Shopify] Script tag cleanup failed on uninstall:", err)
+    );
   }
 
   if (topic === "app_subscriptions/update") {
@@ -114,13 +147,106 @@ export async function POST(req: NextRequest) {
 
   if (topic === "products/update" || topic === "products/create") {
     try {
-      await syncCatalog(store.id);
+      const product = JSON.parse(body) as {
+        id: number;
+        admin_graphql_api_id?: string;
+        handle?: string;
+        title?: string;
+        body_html?: string;
+        product_type?: string;
+        tags?: string;
+        variants?: Array<{
+          id: number;
+          admin_graphql_api_id?: string;
+          title?: string;
+          sku?: string | null;
+          price?: string;
+          inventory_quantity?: number;
+          inventory_item_id?: number;
+        }>;
+      };
+
+      const shopifyId = product.admin_graphql_api_id || `gid://shopify/Product/${product.id}`;
+      const variants = product.variants || [];
+      const inventoryCount = variants.reduce((sum, v) => sum + (v.inventory_quantity || 0), 0);
+      const firstPrice = Number(variants[0]?.price || 0);
+
+      const saved = await prisma.product.upsert({
+        where: { storeId_shopifyId: { storeId: store.id, shopifyId } },
+        update: {
+          handle: product.handle || null,
+          title: product.title || "",
+          description: product.body_html || "",
+          category: product.product_type || null,
+          tags: product.tags ? product.tags.split(", ") : [],
+          inventoryCount,
+          inStock: inventoryCount > 0,
+          price: firstPrice
+        },
+        create: {
+          storeId: store.id,
+          shopifyId,
+          handle: product.handle || null,
+          title: product.title || "",
+          description: product.body_html || "",
+          category: product.product_type || null,
+          tags: product.tags ? product.tags.split(", ") : [],
+          inventoryCount,
+          inStock: inventoryCount > 0,
+          price: firstPrice,
+          currency: "USD"
+        }
+      });
+
+      for (const v of variants) {
+        const variantGid = v.admin_graphql_api_id || `gid://shopify/ProductVariant/${v.id}`;
+        await prisma.productVariant.upsert({
+          where: { storeId_shopifyVariantId: { storeId: store.id, shopifyVariantId: variantGid } },
+          update: {
+            productId: saved.id,
+            title: v.title || "",
+            sku: v.sku || null,
+            price: Number(v.price || 0),
+            inventoryItemId: v.inventory_item_id ? `gid://shopify/InventoryItem/${v.inventory_item_id}` : null,
+            inventoryQty: v.inventory_quantity || 0
+          },
+          create: {
+            storeId: store.id,
+            productId: saved.id,
+            shopifyVariantId: variantGid,
+            title: v.title || "",
+            sku: v.sku || null,
+            price: Number(v.price || 0),
+            inventoryItemId: v.inventory_item_id ? `gid://shopify/InventoryItem/${v.inventory_item_id}` : null,
+            inventoryQty: v.inventory_quantity || 0
+          }
+        });
+      }
+
+      // Re-embed this single product
+      if (process.env.OPENAI_API_KEY) {
+        const { createEmbedding } = await import("@/lib/ai/embeddings");
+        const { upsertProductEmbedding } = await import("@/lib/db/vector");
+        const content = `${saved.title}\n${saved.description}\n${saved.category || ""}\n${(product.tags || "").replace(/, /g, ", ")}`;
+        const embedding = await createEmbedding(content);
+        if (embedding) {
+          const crypto = await import("crypto");
+          await upsertProductEmbedding({
+            id: crypto.randomUUID(),
+            storeId: store.id,
+            productId: saved.id,
+            content,
+            embedding
+          });
+        }
+      }
     } catch (error) {
+      // Fall back to full sync if incremental fails
       await enqueueRetryJob({
         storeId: store.id,
         type: "SYNC_CATALOG",
-        payload: { source: "webhook", topic },
-        errorMessage: error instanceof Error ? error.message : "sync_catalog_failed"
+        payload: { source: "webhook_incremental_failed", topic },
+        errorMessage: error instanceof Error ? error.message : "incremental_sync_failed"
       });
     }
   }
@@ -230,15 +356,6 @@ export async function POST(req: NextRequest) {
         }
       });
     }
-  }
-
-  // GDPR/compliance topics must return 200 promptly after verification.
-  if (
-    topic === "customers/data_request" ||
-    topic === "customers/redact" ||
-    topic === "shop/redact"
-  ) {
-    return NextResponse.json({ ok: true, compliance: true });
   }
 
   return NextResponse.json({ ok: true });

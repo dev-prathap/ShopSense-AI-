@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db/prisma";
+import { SubscriptionTier } from "@prisma/client";
 
 export interface UsageStats {
   currentMonthMessages: number;
@@ -7,6 +8,16 @@ export interface UsageStats {
   isOverLimit: boolean;
   resetDate: Date;
 }
+
+/** Messages per month by tier. null = unlimited. */
+const TIER_LIMITS: Record<string, number | null> = {
+  STARTER: null,  // All paid plans: no usage limits
+  GROWTH: null,
+  PRO: null,
+  ENTERPRISE: null,
+};
+
+const TRIAL_LIMIT = 100;
 
 /**
  * Get current month's message usage for a store
@@ -17,69 +28,38 @@ export async function getMonthlyUsage(storeId: string): Promise<UsageStats> {
   const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
   const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
-  // Count messages sent by the AI (role = 'assistant') this month
-  const currentMonthMessages = await prisma.message.count({
-    where: {
-      conversation: {
-        storeId
+  const [messageCount, subscription] = await Promise.all([
+    prisma.message.count({
+      where: {
+        conversation: { storeId },
+        role: "assistant",
+        createdAt: { gte: startOfMonth, lte: endOfMonth },
       },
-      role: 'assistant',
-      createdAt: {
-        gte: startOfMonth,
-        lte: endOfMonth
-      }
-    }
-  });
+    }),
+    prisma.billingSubscription.findUnique({ where: { storeId } }),
+  ]);
 
-  // Get billing subscription to determine limits
-  const subscription = await prisma.billingSubscription.findUnique({
-    where: { storeId }
-  });
-
-  // Define tier limits (messages per month)
-  const tierLimits = {
-    TRIAL: 100,
-    STARTER: 500,
-    PRO: null // unlimited
-  };
-
-  const tier = subscription?.tier || 'TRIAL';
-  const monthlyLimit = tierLimits[tier as keyof typeof tierLimits];
+  const isTrial = !subscription || (!subscription.externalChargeId && subscription.trialEndsAt && subscription.trialEndsAt > new Date());
+  const monthlyLimit = isTrial ? TRIAL_LIMIT : (TIER_LIMITS[subscription?.tier ?? ""] ?? null);
 
   const percentageUsed = monthlyLimit
-    ? Math.min((currentMonthMessages / monthlyLimit) * 100, 100)
+    ? Math.min((messageCount / monthlyLimit) * 100, 100)
     : 0;
 
-  const isOverLimit = monthlyLimit ? currentMonthMessages >= monthlyLimit : false;
-
   return {
-    currentMonthMessages,
+    currentMonthMessages: messageCount,
     monthlyLimit,
     percentageUsed,
-    isOverLimit,
-    resetDate: nextMonth
+    isOverLimit: monthlyLimit ? messageCount >= monthlyLimit : false,
+    resetDate: nextMonth,
   };
 }
 
 /**
- * Check if a store has exceeded their message limits
+ * Check if a store has exceeded their message limits.
+ * Returns true if within limits, false if over.
  */
 export async function checkUsageLimits(storeId: string): Promise<boolean> {
   const usage = await getMonthlyUsage(storeId);
   return !usage.isOverLimit;
-}
-
-/**
- * Track a new message (to be called when AI sends a response)
- */
-export async function trackMessageUsage(storeId: string, messageId: string): Promise<void> {
-  // The message is already created, we just need to ensure it's counted
-  // This function exists for consistency and future webhook tracking if needed
-
-  const usage = await getMonthlyUsage(storeId);
-
-  // Log usage warning if approaching limit
-  if (usage.monthlyLimit && usage.percentageUsed > 80) {
-    console.warn(`Store ${storeId} approaching message limit: ${usage.currentMonthMessages}/${usage.monthlyLimit} (${usage.percentageUsed.toFixed(1)}%)`);
-  }
 }
