@@ -24,10 +24,16 @@ function ShopifyAuthHandler() {
       }
 
       try {
-        // Get session token from App Bridge (injected by Shopify CDN)
-        const shopify = (window as any).shopify;
+        // Wait for App Bridge to fully initialize (may take a moment after CDN loads)
+        let shopify: any = null;
+        for (let i = 0; i < 20; i++) {
+          shopify = (window as any).shopify;
+          if (shopify?.idToken) break;
+          await new Promise((r) => setTimeout(r, 300));
+        }
+
         if (!shopify?.idToken) {
-          setError("App Bridge not available. Please reload.");
+          setError("App Bridge not available. Please reload the page.");
           return;
         }
 
