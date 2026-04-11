@@ -17,7 +17,15 @@ export async function middleware(req: NextRequest) {
 
   // For protected routes, require authentication
   if (isProtected) {
+    const shop = req.nextUrl.searchParams.get("shop");
+    const host = req.nextUrl.searchParams.get("host");
+    const isShopifyEmbedded = !!(shop || host);
+
     if (!token) {
+      // If opened from Shopify admin (has shop/host params), let the page handle App Bridge auth
+      if (isShopifyEmbedded) {
+        return NextResponse.next();
+      }
       const url = req.nextUrl.clone();
       url.pathname = "/login";
       return NextResponse.redirect(url);
@@ -25,6 +33,9 @@ export async function middleware(req: NextRequest) {
 
     const out = await verifyAppSession(token);
     if (!out.valid) {
+      if (isShopifyEmbedded) {
+        return NextResponse.next();
+      }
       const url = req.nextUrl.clone();
       url.pathname = "/login";
       return NextResponse.redirect(url);
