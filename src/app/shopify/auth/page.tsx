@@ -44,6 +44,13 @@ function ShopifyAuthHandler() {
 
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
+
+          // Store not in DB yet — trigger OAuth install to create it
+          if (data.error === "store_not_found" || data.error === "user_not_found") {
+            window.location.href = `/api/shopify/install?shop=${encodeURIComponent(shop)}`;
+            return;
+          }
+
           setError(data.error || "Authentication failed");
           return;
         }
