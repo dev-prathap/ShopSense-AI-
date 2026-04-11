@@ -10,7 +10,7 @@ type SessionPayload = {
   sub: string;
   email: string;
   name?: string;
-  provider: "credentials" | "google";
+  provider: "credentials" | "google" | "shopify";
 };
 
 function getSecret() {
