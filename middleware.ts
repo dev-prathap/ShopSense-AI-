@@ -9,6 +9,11 @@ export async function middleware(req: NextRequest) {
   const isProtected = protectedPrefixes.some((prefix) => path.startsWith(prefix));
   const isLandingPage = path === "/";
 
+  // Shopify auth handler — always allow (handles its own auth via App Bridge)
+  if (path.startsWith("/shopify/auth")) {
+    return NextResponse.next();
+  }
+
   if (!isProtected && !isAuthPage && !isLandingPage) {
     return NextResponse.next();
   }

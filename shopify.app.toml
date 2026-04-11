@@ -1,6 +1,6 @@
 client_id = "c4aa521b743779cc485898c2803f6480"
 name = "Neryn"
-application_url = "https://neryn.pro/dashboard"
+application_url = "https://neryn.pro/shopify/auth"
 embedded = true
 
 [access_scopes]
