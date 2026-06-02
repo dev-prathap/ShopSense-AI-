@@ -7,12 +7,14 @@ export interface UsageStats {
   percentageUsed: number;
   isOverLimit: boolean;
   resetDate: Date;
+  tier: SubscriptionTier | null;
+  isTrial: boolean;
 }
 
-/** Messages per month by tier. null = unlimited. */
+/** Messages per month by tier. null = unlimited. Must match copy in /dashboard/billing. */
 const TIER_LIMITS: Record<string, number | null> = {
-  STARTER: null,  // All paid plans: no usage limits
-  GROWTH: null,
+  STARTER: 500,
+  GROWTH: 2500,
   PRO: null,
   ENTERPRISE: null,
 };
@@ -52,6 +54,8 @@ export async function getMonthlyUsage(storeId: string): Promise<UsageStats> {
     percentageUsed,
     isOverLimit: monthlyLimit ? messageCount >= monthlyLimit : false,
     resetDate: nextMonth,
+    tier: subscription?.tier ?? null,
+    isTrial,
   };
 }
 

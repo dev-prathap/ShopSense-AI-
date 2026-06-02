@@ -2,6 +2,9 @@ import "server-only";
 
 import { shopifyGraphQL } from "@/lib/shopify/client";
 
+// Must match the declarative config in shopify.app.toml. The toml is the source
+// of truth for new installs; this list is only a fallback reconciliation path
+// for legacy stores that installed before the declarative config was deployed.
 export const REQUIRED_WEBHOOK_TOPICS = [
   "APP_UNINSTALLED",
   "APP_SUBSCRIPTIONS_UPDATE",
@@ -9,8 +12,10 @@ export const REQUIRED_WEBHOOK_TOPICS = [
   "CUSTOMERS_UPDATE",
   "PRODUCTS_CREATE",
   "PRODUCTS_UPDATE",
+  "PRODUCTS_DELETE",
   "ORDERS_CREATE",
   "ORDERS_UPDATED",
+  "INVENTORY_LEVELS_UPDATE",
   "CUSTOMERS_DATA_REQUEST",
   "CUSTOMERS_REDACT",
   "SHOP_REDACT"

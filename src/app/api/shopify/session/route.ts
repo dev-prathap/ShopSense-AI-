@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { UserRole } from "@prisma/client";
-import { verifyShopifySessionToken } from "@/lib/shopify/session-token";
+import { verifyShopifySessionToken, extractShopDomainFromDest } from "@/lib/security/shopify-session";
 import { signAppSession, setAppSessionCookie } from "@/lib/auth/session";
 
 /**
@@ -48,26 +48,31 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "missing_token" }, { status: 400 });
   }
 
-  const result = await verifyShopifySessionToken(token);
-  if (!result.valid) {
+  const result = verifyShopifySessionToken(token);
+  if (!result.valid || !result.claims) {
     return NextResponse.json({ error: result.reason }, { status: 401 });
   }
 
+  const shop = extractShopDomainFromDest(result.claims.dest);
+  if (!shop) {
+    return NextResponse.json({ error: "invalid_dest_claim" }, { status: 401 });
+  }
+
   let store = await prisma.store.findUnique({
-    where: { shopDomain: result.shop }
+    where: { shopDomain: shop }
   });
 
   // Store not in DB — auto-provision via token exchange (no OAuth redirect needed)
   if (!store || store.uninstalledAt) {
-    const accessToken = await exchangeTokenForAccessToken(result.shop, token);
+    const accessToken = await exchangeTokenForAccessToken(shop, token);
     if (!accessToken) {
       return NextResponse.json({ error: "token_exchange_failed" }, { status: 401 });
     }
 
     store = await prisma.store.upsert({
-      where: { shopDomain: result.shop },
+      where: { shopDomain: shop },
       update: { accessToken, uninstalledAt: null },
-      create: { shopDomain: result.shop, accessToken },
+      create: { shopDomain: shop, accessToken },
     });
 
     // Kick off background setup (webhooks, catalog sync, script tag)
@@ -77,9 +82,10 @@ export async function POST(req: NextRequest) {
     await enqueueRetryJob({ storeId: store.id, type: "INSTALL_SCRIPT_TAG", payload: { source: "token_exchange" } });
   }
 
-  // Find or create user for this Shopify session
-  const shopifyUserId = result.shopifyUserId || null;
-  const ownerEmail = `owner@${result.shop}`;
+  // Find or create user for this Shopify session. Shopify session token claims include
+  // `sub` (user id) and `email` for the logged-in merchant user.
+  const shopifyUserId = result.claims.sub || null;
+  const ownerEmail = result.claims.email || `owner@${shop}`;
 
   let user = shopifyUserId
     ? await prisma.user.findFirst({ where: { storeId: store.id, shopifyUserId } })

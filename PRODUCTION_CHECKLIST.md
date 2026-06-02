@@ -19,8 +19,7 @@ UPSTASH_REDIS_REST_URL="https://..."
 UPSTASH_REDIS_REST_TOKEN="..."
 EMAIL_SERVICE_URL="https://api.resend.com/emails"  # or SendGrid, Postmark
 EMAIL_API_KEY="re_..."
-CREEM_API_KEY="your_creem_key"
-CREEM_WEBHOOK_SECRET="webhook_secret_from_creem"
+SHOPIFY_APP_HANDLE="neryn"  # App handle from Shopify Partners Dashboard — drives Managed Pricing URL
 
 # OAuth (if using Google login)
 GOOGLE_CLIENT_ID="..."
@@ -30,7 +29,8 @@ GOOGLE_REDIRECT_URI="https://your-domain.com/api/auth/google/callback"
 
 ### **Security Hardening**
 - [ ] Generate strong random secrets (min 32 chars) for APP_SIGNING_SECRET, APP_AUTH_SECRET
-- [ ] Set up CREEM_WEBHOOK_SECRET for billing security
+- [ ] Configure SHOPIFY_APP_HANDLE to match the handle in Shopify Partners Dashboard
+- [ ] Declare pricing plans (Starter $49 / Growth $79 / Pro $129) in Partners Dashboard → Managed Pricing
 - [ ] Configure CORS properly for your domain
 - [ ] Enable HTTPS everywhere
 - [ ] Set up Content Security Policy (CSP) headers
@@ -278,7 +278,7 @@ export const trackEvent = (event: string, properties: any) => {
 ### **Emergency Procedures**
 1. **Database Issues**: Have connection strings for backup DB ready
 2. **API Rate Limits**: Monitor OpenAI usage and have fallback responses
-3. **Payment Issues**: Direct contact info for Creem/Stripe support
+3. **Payment Issues**: Billing is via Shopify — direct merchants to Shopify Support; check `app_subscriptions/update` webhook delivery in Partners Dashboard
 4. **Security Incident**: Disable affected endpoints, rotate secrets
 
 ---

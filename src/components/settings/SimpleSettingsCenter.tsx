@@ -54,12 +54,22 @@ export function SimpleSettingsCenter({ storeId, inModal = false }: { storeId: st
   });
   const [savingPersonalization, setSavingPersonalization] = useState(false);
 
-  const [billing, setBilling] = useState({
+  const [billing, setBilling] = useState<{
+    monthlyLimit: number | null;
+    currentMonthMessages: number;
+    percentageUsed: number;
+    isOverLimit: boolean;
+    resetDate: string;
+    tier: "STARTER" | "GROWTH" | "PRO" | "ENTERPRISE" | null;
+    isTrial: boolean;
+  }>({
     monthlyLimit: 0,
     currentMonthMessages: 0,
     percentageUsed: 0,
     isOverLimit: false,
     resetDate: "",
+    tier: null,
+    isTrial: false,
   });
   const [billingBusy, setBillingBusy] = useState(false);
 
@@ -123,11 +133,13 @@ export function SimpleSettingsCenter({ storeId, inModal = false }: { storeId: st
           const data = await usageRes.value.json();
           if (data?.usage) {
             setBilling({
-              monthlyLimit: data.usage.monthlyLimit || 0,
+              monthlyLimit: data.usage.monthlyLimit ?? null,
               currentMonthMessages: data.usage.currentMonthMessages || 0,
               percentageUsed: data.usage.percentageUsed || 0,
               isOverLimit: !!data.usage.isOverLimit,
               resetDate: data.usage.resetDate || "",
+              tier: data.usage.tier ?? null,
+              isTrial: !!data.usage.isTrial,
             });
           }
         }
@@ -408,10 +420,26 @@ export function SimpleSettingsCenter({ storeId, inModal = false }: { storeId: st
                     <CardContent className="space-y-4">
                       <div className="flex items-center justify-between rounded-xl border border-slate-200 p-4">
                         <div>
-                          <p className="font-semibold text-slate-900">Neryn Assist</p>
-                          <p className="text-sm text-slate-500">$49/month</p>
+                          <p className="font-semibold text-slate-900">
+                            {billing.tier ? `${billing.tier.charAt(0)}${billing.tier.slice(1).toLowerCase()} Plan` : "No Plan Selected"}
+                          </p>
+                          <p className="text-sm text-slate-500">
+                            {billing.isTrial
+                              ? "Trial"
+                              : billing.tier === "STARTER"
+                              ? "$49/month"
+                              : billing.tier === "GROWTH"
+                              ? "$79/month"
+                              : billing.tier === "PRO"
+                              ? "$129/month"
+                              : billing.tier === "ENTERPRISE"
+                              ? "Custom"
+                              : "—"}
+                          </p>
                         </div>
-                        <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Active</Badge>
+                        <Badge className={billing.tier ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100" : "bg-slate-100 text-slate-600"}>
+                          {billing.tier ? (billing.isTrial ? "Trial" : "Active") : "Inactive"}
+                        </Badge>
                       </div>
                       <div className="rounded-xl border border-slate-200 p-4 text-sm text-slate-600">
                         <p>

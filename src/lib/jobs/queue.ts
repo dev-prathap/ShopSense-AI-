@@ -5,6 +5,8 @@ import { prisma } from "@/lib/db/prisma";
 import { ensureShopifyWebhooks } from "@/lib/shopify/webhooks";
 import { syncCatalog } from "@/lib/shopify/sync";
 import { fetchKnowledgeSources, publishKnowledgeSources, summarizeKnowledgeSources } from "@/lib/knowledge/service";
+import { sendEmail, generateGdprDataRequestEmail } from "@/lib/email/service";
+import { ensureShopifyScriptTag } from "@/lib/shopify/client";
 
 export type RetryJobType =
   | "ENSURE_WEBHOOKS"
@@ -12,7 +14,9 @@ export type RetryJobType =
   | "HANDOFF_NOTIFY"
   | "FETCH_KNOWLEDGE"
   | "SUMMARIZE_KNOWLEDGE"
-  | "PUBLISH_KNOWLEDGE";
+  | "PUBLISH_KNOWLEDGE"
+  | "GDPR_DATA_REQUEST"
+  | "INSTALL_SCRIPT_TAG";
 
 export function computeBackoffSeconds(attempts: number): number {
   return Math.min(900, Math.pow(2, attempts) * 30);
@@ -119,6 +123,55 @@ async function runJob(job: {
       });
       if (!out.ok) {
         throw new Error(out.reason || "summarize_knowledge_failed");
+      }
+    }
+
+    if (job.type === "INSTALL_SCRIPT_TAG") {
+      await ensureShopifyScriptTag(store.shopDomain, store.accessToken, store.id);
+    }
+
+    if (job.type === "GDPR_DATA_REQUEST") {
+      const payload = (job.payload || {}) as { shopDomain?: string; body?: string };
+      if (!payload.body) throw new Error("gdpr_data_request_body_missing");
+
+      const parsed = JSON.parse(payload.body) as {
+        shop_domain?: string;
+        customer?: { id?: number | string; email?: string | null; phone?: string | null };
+        orders_requested?: Array<number | string>;
+      };
+
+      const shopifyCustomerId = parsed.customer?.id ? String(parsed.customer.id) : null;
+      const orderIds = (parsed.orders_requested || []).map((o) => String(o));
+
+      const [customerCache, orderCache] = await Promise.all([
+        shopifyCustomerId
+          ? prisma.customerCache.findUnique({
+              where: { storeId_shopifyCustomerId: { storeId: store.id, shopifyCustomerId } }
+            })
+          : Promise.resolve(null),
+        orderIds.length
+          ? prisma.orderCache.findMany({ where: { storeId: store.id, shopifyOrderId: { in: orderIds } } })
+          : Promise.resolve([])
+      ]);
+
+      const recipient = store.supportEmail;
+      if (!recipient) {
+        // Merchant hasn't configured a support email; fail the job — merchant must configure it.
+        throw new Error("support_email_not_configured");
+      }
+
+      const email = generateGdprDataRequestEmail({
+        shopDomain: store.shopDomain,
+        customerId: shopifyCustomerId ?? "(unknown)",
+        customerEmail: parsed.customer?.email ?? null,
+        customerPhone: parsed.customer?.phone ?? null,
+        ordersRequested: orderIds,
+        collectedData: { customerCache, orderCache }
+      });
+
+      const result = await sendEmail({ to: recipient, subject: email.subject, html: email.html, text: email.text });
+      if (!result.sent) {
+        throw new Error(result.error || "gdpr_email_send_failed");
       }
     }
 

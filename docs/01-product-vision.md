@@ -59,9 +59,9 @@ Differentiators:
 
 ## 6. Pricing Hypothesis (v1)
 - 14-day free trial
-- Starter: $19/month
-- Growth: $49/month
-- Pro: $99/month
+- Starter: $49/month
+- Growth: $79/month
+- Pro: $129/month
 - Enterprise: custom
 
 Early-stage pricing strategy:

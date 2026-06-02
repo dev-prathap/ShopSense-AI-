@@ -8,6 +8,48 @@ import { enqueueRetryJob } from "@/lib/jobs/queue";
 import { applyInventoryDelta } from "@/lib/shopify/inventory";
 import { deleteShopifyScriptTag } from "@/lib/shopify/client";
 
+/**
+ * Shape of the `app_subscriptions/update` webhook payload. Shopify wraps it
+ * under `app_subscription` in newer API versions; older payloads are flat.
+ */
+type SubscriptionUpdatePayload = {
+  id?: number | string;
+  admin_graphql_api_id?: string;
+  name?: string;
+  status?: string;
+  trial_ends_on?: string | null;
+  current_period_end?: string | null;
+  cancelled_on?: string | null;
+  line_items?: Array<{
+    plan?: {
+      pricing_details?: {
+        price?: { amount?: string | number; currency_code?: string };
+        interval?: string;
+      };
+    };
+  }>;
+};
+
+/**
+ * Resolve our internal `SubscriptionTier` from a Shopify subscription payload.
+ * Price is the source of truth (Managed Pricing plan names are merchant-facing
+ * and can be changed in the Partners Dashboard). Falls back to name matching
+ * and finally STARTER.
+ */
+function resolveTierFromSubscriptionPayload(payload: SubscriptionUpdatePayload): SubscriptionTier {
+  const priceAmount = Number(payload.line_items?.[0]?.plan?.pricing_details?.price?.amount);
+  if (Number.isFinite(priceAmount)) {
+    if (priceAmount >= 129) return "PRO";
+    if (priceAmount >= 79) return "GROWTH";
+    if (priceAmount >= 49) return "STARTER";
+  }
+
+  const name = (payload.name || "").toUpperCase();
+  if (name.includes("PRO")) return "PRO";
+  if (name.includes("GROWTH")) return "GROWTH";
+  return "STARTER";
+}
+
 export async function POST(req: NextRequest) {
   const topic = req.headers.get("x-shopify-topic") || "";
   const shopDomain = req.headers.get("x-shopify-shop-domain") || "";
@@ -20,11 +62,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid HMAC" }, { status: 401 });
   }
 
-  // GDPR mandatory compliance webhooks must respond even for unknown stores
+  // GDPR mandatory compliance webhooks must respond 200 within 5s even for unknown stores.
+  // Heavy work is enqueued so the webhook acknowledges quickly and can be retried.
   const gdprTopics = ["customers/data_request", "customers/redact", "shop/redact"];
   if (gdprTopics.includes(topic)) {
     const store = await prisma.store.findUnique({ where: { shopDomain } });
     if (store) {
+      if (topic === "customers/data_request") {
+        // Enqueue async data-collection + email to the merchant (controller).
+        await enqueueRetryJob({
+          storeId: store.id,
+          type: "GDPR_DATA_REQUEST",
+          payload: { shopDomain, body },
+          errorMessage: "queued_for_processing"
+        }).catch((err) => console.error("[GDPR] enqueue data_request failed", err));
+      }
+
       if (topic === "customers/redact") {
         const payload = JSON.parse(body) as {
           customer?: { id?: number | string };
@@ -40,11 +93,17 @@ export async function POST(req: NextRequest) {
           });
         }
       }
+
       if (topic === "shop/redact") {
-        await prisma.store.delete({ where: { id: store.id } }).catch(() => {});
+        // Cascades delete: Products, Conversations, Messages, CustomerCache, OrderCache,
+        // ProductEmbedding, KnowledgeSource, KnowledgeChunk, BillingSubscription, etc.
+        // Shopify fires this 48h after uninstall; we fulfil within 30 days per GDPR.
+        await prisma.store.delete({ where: { id: store.id } }).catch((err) =>
+          console.error("[GDPR] shop/redact cascade delete failed", err)
+        );
       }
     }
-    // Always acknowledge GDPR webhooks, even for unknown stores
+    // Always acknowledge GDPR webhooks, even for unknown stores.
     return NextResponse.json({ ok: true });
   }
 
@@ -75,6 +134,14 @@ export async function POST(req: NextRequest) {
       where: { id: store.id },
       data: { uninstalledAt: new Date() }
     });
+
+    // Shopify auto-cancels the subscription on uninstall, but mark it inactive locally
+    // so any lingering billing-guarded features turn off immediately rather than waiting
+    // for the next app_subscriptions/update webhook.
+    await prisma.billingSubscription
+      .updateMany({ where: { storeId: store.id }, data: { active: false } })
+      .catch((err) => console.error("[Shopify] Subscription deactivate on uninstall failed:", err));
+
     // Remove widget script tag from storefront
     await deleteShopifyScriptTag(store.shopDomain, store.accessToken, store.id).catch((err) =>
       console.error("[Shopify] Script tag cleanup failed on uninstall:", err)
@@ -82,26 +149,26 @@ export async function POST(req: NextRequest) {
   }
 
   if (topic === "app_subscriptions/update") {
-    const payload = JSON.parse(body) as {
-      id?: number | string;
-      admin_graphql_api_id?: string;
-      name?: string;
-      status?: string;
-      trial_ends_on?: string | null;
-      current_period_end?: string | null;
-      cancelled_on?: string | null;
-    };
+    // Shopify wraps the payload under `app_subscription` in newer API versions.
+    const parsed = JSON.parse(body) as {
+      app_subscription?: SubscriptionUpdatePayload;
+    } & SubscriptionUpdatePayload;
+    const payload: SubscriptionUpdatePayload = parsed.app_subscription ?? parsed;
 
-    const rawTier = (payload.name || "STARTER").toUpperCase();
-    const tier: SubscriptionTier = rawTier.includes("PRO") ? "PRO" : rawTier.includes("GROWTH") ? "GROWTH" : "STARTER";
-    const status = (payload.status || "").toLowerCase();
-    const active = status === "active" || status === "accepted";
+    // ACTIVE + ACCEPTED count as active; everything else (DECLINED, EXPIRED, FROZEN,
+    // CANCELLED, PENDING, UNPAID) deactivates plan features locally.
+    const status = (payload.status || "").toUpperCase();
+    const active = status === "ACTIVE" || status === "ACCEPTED";
+
+    const tier = resolveTierFromSubscriptionPayload(payload);
     const externalChargeId = payload.admin_graphql_api_id || (payload.id ? String(payload.id) : null);
 
-    const trialEndsAt = payload.trial_ends_on
-      ? new Date(payload.trial_ends_on)
-      : payload.current_period_end
-        ? new Date(payload.current_period_end)
+    // Prefer current_period_end for renewal, fall back to trial_ends_on, then a
+    // short default so new subscribers aren't locked out while webhooks propagate.
+    const trialEndsAt = payload.current_period_end
+      ? new Date(payload.current_period_end)
+      : payload.trial_ends_on
+        ? new Date(payload.trial_ends_on)
         : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
     await prisma.billingSubscription.upsert({
@@ -248,6 +315,17 @@ export async function POST(req: NextRequest) {
         payload: { source: "webhook_incremental_failed", topic },
         errorMessage: error instanceof Error ? error.message : "incremental_sync_failed"
       });
+    }
+  }
+
+  if (topic === "products/delete") {
+    const payload = JSON.parse(body) as { id?: number | string; admin_graphql_api_id?: string };
+    const shopifyId = payload.admin_graphql_api_id || (payload.id ? `gid://shopify/Product/${payload.id}` : null);
+    if (shopifyId) {
+      // Cascades to ProductVariant + ProductEmbedding via schema.
+      await prisma.product
+        .delete({ where: { storeId_shopifyId: { storeId: store.id, shopifyId } } })
+        .catch((err) => console.warn("[Shopify] products/delete no-op or failed:", err instanceof Error ? err.message : err));
     }
   }
 

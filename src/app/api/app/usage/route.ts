@@ -28,6 +28,8 @@ export async function GET(req: NextRequest) {
         percentageUsed: Math.round(usage.percentageUsed * 100) / 100,
         isOverLimit: usage.isOverLimit,
         resetDate: usage.resetDate.toISOString(),
+        tier: usage.tier,
+        isTrial: usage.isTrial,
       },
     });
   } catch (error) {

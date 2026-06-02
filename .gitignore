@@ -12,3 +12,4 @@ pnpm-debug.log*
 public/*.json
 .env
 .env.local
+.vercel

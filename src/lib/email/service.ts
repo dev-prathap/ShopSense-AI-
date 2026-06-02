@@ -141,6 +141,65 @@ If you're having trouble with the link, copy and paste it into your browser.
 }
 
 /**
+ * Generate a GDPR data-request notification for the merchant.
+ *
+ * Shopify requires that apps respond to `customers/data_request` by making the
+ * customer's data available — typically by emailing the merchant with a summary
+ * of what the app holds. The merchant is the data controller; we (the app) are
+ * the data processor.
+ */
+export function generateGdprDataRequestEmail(data: {
+  shopDomain: string;
+  customerId: string;
+  customerEmail: string | null;
+  customerPhone: string | null;
+  ordersRequested: string[];
+  collectedData: {
+    customerCache: unknown | null;
+    orderCache: unknown[];
+  };
+}): { subject: string; html: string; text: string } {
+  const subject = `[Neryn] GDPR data request received — ${data.shopDomain}`;
+  const payloadJson = JSON.stringify(data.collectedData, null, 2);
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 640px; margin: 0 auto; padding: 24px; color: #111827;">
+      <h1 style="font-size: 20px;">GDPR Data Request</h1>
+      <p>A customer of <strong>${data.shopDomain}</strong> has requested the personal data that Neryn holds about them. Below is everything Neryn has stored for this customer. As the data controller, please forward this to the customer within 30 days as required by GDPR / applicable privacy law.</p>
+      <h2 style="font-size: 16px; margin-top: 24px;">Request details</h2>
+      <ul>
+        <li><strong>Shopify customer ID:</strong> ${data.customerId}</li>
+        <li><strong>Email:</strong> ${data.customerEmail ?? "(none)"}</li>
+        <li><strong>Phone:</strong> ${data.customerPhone ?? "(none)"}</li>
+        <li><strong>Orders requested:</strong> ${data.ordersRequested.length ? data.ordersRequested.join(", ") : "(none)"}</li>
+      </ul>
+      <h2 style="font-size: 16px; margin-top: 24px;">Data held by Neryn</h2>
+      <pre style="background: #f3f4f6; padding: 16px; border-radius: 8px; overflow: auto; font-size: 12px;">${payloadJson}</pre>
+      <p style="color: #6b7280; font-size: 12px; margin-top: 32px;">This email was generated automatically in response to a Shopify GDPR webhook. If you did not expect this, please contact support at support@neryn.pro.</p>
+    </body>
+    </html>
+  `;
+
+  const text = `GDPR Data Request — ${data.shopDomain}
+
+A customer has requested the personal data that Neryn holds about them.
+
+Shopify customer ID: ${data.customerId}
+Email: ${data.customerEmail ?? "(none)"}
+Phone: ${data.customerPhone ?? "(none)"}
+Orders requested: ${data.ordersRequested.length ? data.ordersRequested.join(", ") : "(none)"}
+
+Data held by Neryn:
+${payloadJson}
+
+This email was generated automatically in response to a Shopify GDPR webhook.`;
+
+  return { subject, html, text };
+}
+
+/**
  * Generate handoff notification email
  */
 export function generateHandoffEmail(data: {

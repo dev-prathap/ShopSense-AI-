@@ -1,69 +1,50 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type SubscribeButtonProps = {
-  storeId: string;
-  productId: string;
+  managedPricingUrl: string;
   variant?: "default" | "outline";
   label: string;
   className?: string;
+  disabled?: boolean;
 };
 
-export function SubscribeButton({ storeId, productId, variant = "default", label, className }: SubscribeButtonProps) {
-  const [loading, setLoading] = useState(false);
-
-  const handleSubscribe = async () => {
-    if (!productId || productId === "custom") {
-      toast.error("Please contact sales for this plan.");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const res = await fetch("/api/billing/creem/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ storeId, productId }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to initiate checkout");
-      }
-
-      if (data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
-      } else {
-        throw new Error("No checkout URL returned");
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error(error instanceof Error ? error.message : "Something went wrong");
-    } finally {
-      setLoading(false);
+/**
+ * Redirects the merchant to Shopify's Managed Pricing page where they pick/change
+ * a plan. Shopify then fires `app_subscriptions/update` webhook to sync state back.
+ *
+ * When embedded, App Bridge intercepts the top-level navigation so the redirect
+ * works correctly out of the iframe. No JS is needed to trigger that — a plain
+ * window.top navigation is what App Bridge expects.
+ */
+export function SubscribeButton({
+  managedPricingUrl,
+  variant = "default",
+  label,
+  className,
+  disabled
+}: SubscribeButtonProps) {
+  const handleClick = () => {
+    if (disabled) return;
+    if (typeof window !== "undefined") {
+      // Managed Pricing lives in admin.shopify.com — must break out of iframe.
+      const target = window.top ?? window;
+      target.location.href = managedPricingUrl;
     }
   };
 
   return (
     <Button
       variant={variant}
-      disabled={loading}
-      onClick={handleSubscribe}
+      disabled={disabled}
+      onClick={handleClick}
       className={cn("w-full h-11 rounded-xl font-bold transition-all active:scale-95", className)}
     >
-      {loading ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
-      ) : (
-        <>
-          {label}
-          <ArrowRight className="ml-2 h-4 w-4" />
-        </>
-      )}
+      {label}
+      <ArrowRight className="ml-2 h-4 w-4" />
     </Button>
   );
 }

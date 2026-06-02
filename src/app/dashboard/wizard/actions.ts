@@ -53,41 +53,6 @@ export async function activateTrial(storeId: string) {
   }
 }
 
-export async function activatePaid(storeId: string) {
-  if (!storeId) return { ok: false };
-  
-  // Future: Here you would integrate with Stripe/Creem
-  const futureDate = new Date();
-  futureDate.setFullYear(futureDate.getFullYear() + 10); // Placeholder for non-trial
-
-  try {
-    await prisma.billingSubscription.upsert({
-      where: { storeId },
-      update: {
-        active: true,
-        tier: "PRO",
-        trialEndsAt: futureDate
-      },
-      create: {
-        storeId,
-        tier: "PRO",
-        trialEndsAt: futureDate,
-        active: true
-      }
-    });
-
-    await prisma.store.update({
-      where: { id: storeId },
-      data: { onboardingStep: 10 }
-    });
-
-    return { ok: true };
-  } catch (error) {
-    console.error("Paid activation failed", error);
-    return { ok: false };
-  }
-}
-
 export async function updateWizardStep(storeId: string, currentStep: number) {
   if (!storeId) return { ok: false };
   try {

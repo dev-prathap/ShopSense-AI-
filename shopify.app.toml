@@ -1,5 +1,6 @@
 client_id = "c4aa521b743779cc485898c2803f6480"
 name = "Neryn"
+handle = "neryn"
 application_url = "https://neryn.pro/shopify/auth"
 embedded = true
 
@@ -18,6 +19,41 @@ api_version = "2025-01"
   customer_data_request_url = "https://neryn.pro/api/webhooks/shopify"
   customer_deletion_url = "https://neryn.pro/api/webhooks/shopify"
   shop_deletion_url = "https://neryn.pro/api/webhooks/shopify"
+
+  [[webhooks.subscriptions]]
+  topics = [
+    "app/uninstalled",
+    "app_subscriptions/update"
+  ]
+  uri = "https://neryn.pro/api/webhooks/shopify"
+
+  [[webhooks.subscriptions]]
+  topics = [
+    "products/create",
+    "products/update",
+    "products/delete"
+  ]
+  uri = "https://neryn.pro/api/webhooks/shopify"
+
+  [[webhooks.subscriptions]]
+  topics = [
+    "orders/create",
+    "orders/updated"
+  ]
+  uri = "https://neryn.pro/api/webhooks/shopify"
+
+  [[webhooks.subscriptions]]
+  topics = [
+    "customers/create",
+    "customers/update"
+  ]
+  uri = "https://neryn.pro/api/webhooks/shopify"
+
+  [[webhooks.subscriptions]]
+  topics = [
+    "inventory_levels/update"
+  ]
+  uri = "https://neryn.pro/api/webhooks/shopify"
 
 [pos]
 embedded = false

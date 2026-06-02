@@ -32,8 +32,6 @@ Next.js + Postgres (pgvector) MVP that provides a Shopify AI sales assistant wit
 - `GET /api/admin/inbox/conversations`
 - `GET /api/admin/inbox/conversations/[conversationId]`
 - `POST /api/admin/inbox/conversations/[conversationId]/resolve`
-- `POST /api/admin/billing/subscribe`
-- `GET /api/admin/billing/confirm`
 - `POST /api/admin/webhooks/register`
 - `POST /api/admin/jobs/process`
 - `GET /api/cron/retry-jobs`
@@ -107,7 +105,7 @@ Use:
 - Webhook registration + production billing charge creation should be completed during deployment hardening.
 - Protected storefront endpoints (`/api/chat`, `/api/order-status`, `/api/analytics/events`, `/api/cart-recovery/offer`) require a signed widget token in `Authorization: Bearer <token>` or `x-store-token`.
 - Generate widget tokens via `POST /api/admin/widget/token` with Shopify App Bridge session token (`Authorization: Bearer <shopify_session_jwt>`).
-- `/api/admin/billing/subscribe` creates Shopify recurring subscription confirmation URLs; `/api/admin/billing/confirm` finalizes tier state after approval.
+- Billing uses Shopify Managed Pricing: plans are declared in the Shopify Partners Dashboard and the `/dashboard/billing` page redirects merchants to Shopify's hosted plan picker. Plan state is synced locally via the `app_subscriptions/update` webhook.
 - Shopify callback now attempts webhook auto-registration and initial catalog sync.
 - `POST /api/admin/webhooks/register` can be used to manually reconcile webhook subscriptions for an installed store.
 - Retry jobs are persisted in database (`RetryJob`) and processed via `POST /api/admin/jobs/process` with exponential backoff.
