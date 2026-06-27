@@ -44,23 +44,39 @@ export async function verifyAppSession(token: string) {
   }
 }
 
+/**
+ * Cookie attributes for the app session.
+ *
+ * Inside the Shopify admin the app runs in a cross-site iframe, so the session
+ * cookie must be `SameSite=None; Secure` (plus `Partitioned`/CHIPS for Chrome's
+ * third-party cookie model) or the browser will not send it on the embedded
+ * navigation to /dashboard — which makes the app bounce to /login.
+ *
+ * Locally we fall back to `SameSite=Lax` over http so non-embedded dev login
+ * (which can't use Secure cookies over http) keeps working.
+ */
+function sessionCookieAttributes() {
+  const isProd = process.env.NODE_ENV === "production";
+  return isProd
+    ? { sameSite: "none" as const, secure: true, partitioned: true }
+    : { sameSite: "lax" as const, secure: false };
+}
+
 export function setAppSessionCookie(res: NextResponse, token: string) {
   res.cookies.set(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
     path: "/",
-    maxAge: 7 * 24 * 60 * 60
+    maxAge: 7 * 24 * 60 * 60,
+    ...sessionCookieAttributes(),
   });
 }
 
 export function clearAppSessionCookie(res: NextResponse) {
   res.cookies.set(COOKIE_NAME, "", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
     path: "/",
-    maxAge: 0
+    maxAge: 0,
+    ...sessionCookieAttributes(),
   });
 }
 

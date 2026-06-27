@@ -54,7 +54,13 @@ function ShopifyAuthHandler() {
         }
 
         const { storeId } = await res.json();
-        window.location.href = `/dashboard?storeId=${storeId}`;
+        // Preserve host/shop so the dashboard stays in the embedded App Bridge
+        // context and the middleware's embedded escape-hatch keeps working.
+        const params = new URLSearchParams({ storeId });
+        const host = searchParams.get("host");
+        if (host) params.set("host", host);
+        params.set("shop", shop);
+        window.location.href = `/dashboard?${params.toString()}`;
       } catch (err) {
         console.error("Shopify auth failed:", err);
         setError("Failed to connect. Please reload.");
