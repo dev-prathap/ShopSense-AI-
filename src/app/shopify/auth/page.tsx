@@ -4,19 +4,14 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { Loader2, Sparkles } from "lucide-react";
-import Script from "next/script";
 
 function ShopifyAuthHandler() {
   const searchParams = useSearchParams();
   const [error, setError] = useState("");
-  const [bridgeReady, setBridgeReady] = useState(false);
 
   useEffect(() => {
-    if (!bridgeReady) return;
-
     async function authenticate() {
       const shop = searchParams.get("shop");
-      const host = searchParams.get("host");
 
       if (!shop) {
         window.location.href = "/login";
@@ -24,7 +19,9 @@ function ShopifyAuthHandler() {
       }
 
       try {
-        // Wait for App Bridge to fully initialize (may take a moment after CDN loads)
+        // App Bridge loads synchronously in <head> (see src/app/layout.tsx), so
+        // window.shopify is normally ready immediately. This short poll is just a
+        // safety net for the rare slow init.
         let shopify: any = null;
         for (let i = 0; i < 20; i++) {
           shopify = (window as any).shopify;
@@ -65,18 +62,10 @@ function ShopifyAuthHandler() {
     }
 
     authenticate();
-  }, [bridgeReady, searchParams]);
-
-  const apiKey = process.env.NEXT_PUBLIC_SHOPIFY_API_KEY || "";
+  }, [searchParams]);
 
   return (
-    <>
-      <Script
-        src={`https://cdn.shopify.com/shopifycloud/app-bridge.js?apiKey=${apiKey}`}
-        onLoad={() => setBridgeReady(true)}
-        strategy="afterInteractive"
-      />
-      <div className="min-h-screen flex items-center justify-center bg-[#fafafa]">
+    <div className="min-h-screen flex items-center justify-center bg-[#fafafa]">
         <div className="flex flex-col items-center gap-4">
           <div className="h-9 w-9 rounded-[10px] bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-600/25">
             <Sparkles className="text-white" size={16} fill="currentColor" />
@@ -101,7 +90,6 @@ function ShopifyAuthHandler() {
           )}
         </div>
       </div>
-    </>
   );
 }
 

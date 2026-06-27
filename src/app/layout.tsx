@@ -44,6 +44,19 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={cn("font-sans", inter.variable)}>
+      <head>
+        {/*
+          Shopify App Bridge. Must be the FIRST script in <head>, loaded
+          synchronously (no async/defer), and configured via this meta tag —
+          NOT a ?apiKey= query string, which the modern CDN script ignores.
+          Required for the embedded admin app to initialize window.shopify.
+        */}
+        <meta
+          name="shopify-api-key"
+          content={process.env.NEXT_PUBLIC_SHOPIFY_API_KEY || ""}
+        />
+        <script src="https://cdn.shopify.com/shopifycloud/app-bridge.js" />
+      </head>
       <body className="antialiased">
         {children}
         
