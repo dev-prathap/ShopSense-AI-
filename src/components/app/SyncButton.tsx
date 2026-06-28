@@ -15,10 +15,14 @@ export function SyncButton({ storeId }: SyncButtonProps) {
     setIsLoading(true);
 
     try {
+      // Admin routes authenticate via the App Bridge session token, so attach a
+      // fresh idToken as a Bearer header when running inside the Shopify admin.
+      const token = await (window as any).shopify?.idToken?.();
       const response = await fetch("/api/admin/sync", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ storeId }),
       });

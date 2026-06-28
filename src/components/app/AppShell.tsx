@@ -10,6 +10,7 @@ import {
   LogOut,
   Users,
 } from "lucide-react";
+import { SessionTokenHeartbeat } from "@/components/app/SessionTokenHeartbeat";
 
 type Item = {
   href: string;
@@ -59,6 +60,9 @@ export function AppShell({
 
   return (
     <div className="flex min-h-screen bg-[#fafafe]">
+      {/* Emits App Bridge session-token traffic on every embedded session. */}
+      <SessionTokenHeartbeat storeId={storeId} />
+
       {/* Sidebar */}
       <aside className="fixed inset-y-0 left-0 z-50 hidden w-[240px] border-r border-slate-100 bg-white md:block">
         <div className="flex h-full flex-col px-3.5 py-5">
