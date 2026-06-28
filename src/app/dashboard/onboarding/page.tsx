@@ -7,6 +7,7 @@ import { KnowledgeSetup } from "@/components/onboarding/KnowledgeSetup";
 import { computeStoreOnboardingProgress } from "@/lib/onboarding/progress";
 import { AppShell } from "@/components/app/AppShell";
 import { PageHeader } from "@/components/app/PageHeader";
+import { SyncButton } from "@/components/app/SyncButton";
 import { ActionPanel } from "@/components/app/ActionPanel";
 import { StatusPill } from "@/components/app/StatusPill";
 import { OnboardingState } from "@/lib/ui/contracts";
@@ -112,12 +113,10 @@ export default async function OnboardingPage({ searchParams }: { searchParams: {
               <p className="text-sm font-bold text-slate-900">{store.shopDomain}</p>
             </div>
             <div className="flex gap-2">
-              <a href={`/api/shopify/install?shop=${encodeURIComponent(store.shopDomain)}`}>
-                <Button variant="outline" className="rounded-xl font-bold border-slate-200">Sync Now</Button>
-              </a>
-              <Link href="/dashboard/connect">
-                <Button variant="ghost" className="rounded-xl font-bold text-slate-500 hover:text-slate-900">Change Store</Button>
-              </Link>
+              <SyncButton
+                storeId={storeId}
+                className="rounded-xl font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 h-10 px-4 text-[13px]"
+              />
             </div>
           </div>
         </ActionPanel>

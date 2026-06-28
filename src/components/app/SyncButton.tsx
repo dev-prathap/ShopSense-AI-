@@ -6,9 +6,14 @@ import { toast } from "sonner";
 
 interface SyncButtonProps {
   storeId: string;
+  /** Override styling for use on light surfaces (defaults to the dark card style). */
+  className?: string;
 }
 
-export function SyncButton({ storeId }: SyncButtonProps) {
+const DARK_CLASS =
+  "w-full font-bold text-[13px] h-12 border-white/10 hover:bg-white/5 text-slate-300 rounded-xl transition-all hover:border-white/20 hover:text-white disabled:opacity-50";
+
+export function SyncButton({ storeId, className }: SyncButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSync = async () => {
@@ -57,7 +62,7 @@ export function SyncButton({ storeId }: SyncButtonProps) {
       onClick={handleSync}
       disabled={isLoading}
       variant="outline"
-      className="w-full font-bold text-[13px] h-12 border-white/10 hover:bg-white/5 text-slate-300 rounded-xl transition-all hover:border-white/20 hover:text-white disabled:opacity-50"
+      className={className ?? DARK_CLASS}
     >
       {isLoading ? (
         <div className="flex items-center gap-2">
