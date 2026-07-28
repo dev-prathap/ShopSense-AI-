@@ -5,7 +5,26 @@ application_url = "https://neryn.pro/shopify/auth"
 embedded = true
 
 [access_scopes]
-scopes = "read_customer_events,read_cart_transforms,write_cart_transforms,read_customers,write_customers,read_inventory,read_orders,write_orders,read_product_listings,write_product_listings,read_products,write_products,read_script_tags,write_script_tags,unauthenticated_read_product_inventory,unauthenticated_read_product_listings,unauthenticated_read_product_tags"
+# Every scope here is justified by a call in the codebase — App Store review
+# asks what each one is for, and a merchant approves this list verbatim.
+#
+#   read_products      products/variants/collections queries in lib/shopify/sync.ts,
+#                      plus the PRODUCTS_CREATE/UPDATE/DELETE webhooks
+#   read_inventory     variant inventoryItem levels in lib/shopify/sync.ts,
+#                      plus the INVENTORY_LEVELS_UPDATE webhook
+#   read_orders        orders/fulfillments/trackingInfo in lib/shopify/client.ts
+#                      (order status lookups), plus the ORDERS_* webhooks
+#   read_customers     the CUSTOMERS_CREATE/UPDATE webhooks
+#   read_script_tags   checking for an existing widget script before installing
+#   write_script_tags  scriptTagCreate/scriptTagDelete — installs and removes the
+#                      storefront chat widget. The only write the app performs.
+#
+# Removed 2026-07-29 because nothing in src/ used them: write_products,
+# write_product_listings, write_orders, write_customers, write_cart_transforms,
+# read_product_listings, read_cart_transforms, read_customer_events, and the
+# three unauthenticated_read_* Storefront scopes (the widget reads the synced
+# catalog from this app's own database, never the Storefront API).
+scopes = "read_products,read_inventory,read_orders,read_customers,read_script_tags,write_script_tags"
 
 [auth]
 redirect_urls = [

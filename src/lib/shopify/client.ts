@@ -25,7 +25,14 @@ export async function shopifyGraphQL<T>(shopDomain: string, accessToken: string,
 }
 
 export function shopifyInstallUrl(shop: string, state: string): string {
-  const scopes = process.env.SHOPIFY_SCOPES || "read_products,read_orders,read_script_tags,write_script_tags";
+  // Keep in step with access_scopes in shopify.app.toml, which is the list a
+  // merchant actually approves for App Store installs. The previous fallback
+  // here was missing read_inventory and read_customers, so an install that fell
+  // back to it came away unable to sync stock levels or register the customer
+  // webhooks.
+  const scopes =
+    process.env.SHOPIFY_SCOPES ||
+    "read_products,read_inventory,read_orders,read_customers,read_script_tags,write_script_tags";
   const redirectUri = `${process.env.SHOPIFY_APP_URL}/api/shopify/callback`;
   const apiKey = process.env.SHOPIFY_API_KEY;
 
