@@ -7,10 +7,14 @@ export async function getWizardStatus(storeId: string) {
   if (!storeId) return null;
   return await prisma.store.findUnique({
     where: { id: storeId },
-    select: { 
-      onboardingStep: true, 
-      aiTone: true, 
+    select: {
+      onboardingStep: true,
+      aiTone: true,
       onboardingCompletedAt: true,
+      // Shown back to the merchant as a "connected to <store>" confirmation, so
+      // the wizard never has to ask for a shop domain Shopify already gave us.
+      shopDomain: true,
+      businessName: true,
       billingSubscription: {
         select: { active: true, tier: true }
       }

@@ -132,9 +132,21 @@ function WizardPageContent() {
   const [isInitializing, setIsInitializing] = useState(true);
   const [isProcessingCheckout, setIsProcessingCheckout] = useState(false);
   const [billingError, setBillingError] = useState("");
+  const [store, setStore] = useState<{ shopDomain: string; businessName: string | null } | null>(null);
+  const [isEmbedded, setIsEmbedded] = useState(false);
 
   const hasInitialized = useRef(false);
   const confettiFired = useRef(false);
+
+  // Opened from the Shopify admin the merchant never walked a Welcome ->
+  // Connect Store journey — Shopify handed us the shop directly. Showing those
+  // as completed steps invents history the merchant doesn't recognise, so the
+  // outer journey bar is dropped and the in-card dots carry the progress.
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.top !== window.self) {
+      setIsEmbedded(true);
+    }
+  }, []);
 
   // Confetti on SUCCESS
   useEffect(() => {
@@ -158,6 +170,7 @@ function WizardPageContent() {
       try {
         const status = await getWizardStatus(storeId!);
         if (status) {
+          setStore({ shopDomain: status.shopDomain, businessName: status.businessName });
           const subActive = status.billingSubscription?.active || false;
           if (status.onboardingCompletedAt && subActive) { router.push(`/dashboard?storeId=${storeId}`); return; }
           const savedStepValue = status.onboardingStep || 1;
@@ -243,7 +256,9 @@ function WizardPageContent() {
 
   return (
     <OnboardingShell maxWidth="max-w-[560px]">
-      <OnboardingProgress steps={["Welcome", "Connect Store", "Activate Plan"]} currentStep={2} />
+      {!isEmbedded && (
+        <OnboardingProgress steps={["Welcome", "Connect Store", "Activate Plan"]} currentStep={2} />
+      )}
 
       {webhookStatus === "partial_failure" && (
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
@@ -274,6 +289,25 @@ function WizardPageContent() {
           {/* ── SYNC ── */}
           {currentStep === "SYNC" && (
             <div className="space-y-8 text-center">
+              {/*
+                Shopify hands us the shop before this page renders, so the store
+                is stated back as an established fact rather than asked for. This
+                is the screen that used to be a "type your domain" question.
+              */}
+              {store && (
+                <div className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-50 border border-emerald-100">
+                  <CheckCircle2 size={14} className="text-emerald-600 flex-shrink-0" />
+                  <span className="text-[12px] font-bold text-emerald-900 truncate">
+                    Connected to {store.businessName || store.shopDomain}
+                  </span>
+                  {store.businessName && (
+                    <span className="text-[11px] font-medium text-emerald-600/70 truncate hidden sm:inline">
+                      · {store.shopDomain}
+                    </span>
+                  )}
+                </div>
+              )}
+
               <div className="relative mx-auto w-32 h-32">
                 <svg className="w-32 h-32 -rotate-90" viewBox="0 0 100 100">
                   <circle cx="50" cy="50" r="44" fill="none" stroke="#f1f5f9" strokeWidth="6" />
