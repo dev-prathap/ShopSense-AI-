@@ -85,7 +85,9 @@ export async function POST(req: NextRequest) {
   // Find or create user for this Shopify session. Shopify session token claims include
   // `sub` (user id) and `email` for the logged-in merchant user.
   const shopifyUserId = result.claims.sub || null;
-  const ownerEmail = result.claims.email || `owner@${shop}`;
+  // Lowercased so it matches the AppUser rows created by credentials/Google
+  // signup, which normalize the address before storing it.
+  const ownerEmail = (result.claims.email || `owner@${shop}`).trim().toLowerCase();
 
   let user = shopifyUserId
     ? await prisma.user.findFirst({ where: { storeId: store.id, shopifyUserId } })
@@ -106,9 +108,49 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  // The app session identifies an AppUser, not a store-scoped User: every access
+  // check in the app (dashboard, wizard, team, /api/app/*) resolves the session
+  // `sub` through AppUserStoreMembership.appUserId, which references AppUser.
+  // An install started from the Shopify admin never runs the OAuth callback that
+  // creates that membership, so provision it here — otherwise every membership
+  // lookup returns empty and /dashboard bounces to the connect wizard.
+  // Reuse the account already linked to this store when there is one — a web
+  // signup that installed through the OAuth callback owns the store under its
+  // real email, and minting a second `owner@<shop>` account here would leave the
+  // Team page showing two owners for the same person.
+  const existingMembership = await prisma.appUserStoreMembership.findFirst({
+    where: { storeId: store.id },
+    orderBy: { createdAt: "asc" },
+    include: { appUser: true }
+  });
+
+  const appUser =
+    existingMembership?.appUser ??
+    (await prisma.appUser.upsert({
+      where: { email: ownerEmail },
+      update: {},
+      create: {
+        email: ownerEmail,
+        authProvider: "shopify"
+      }
+    }));
+
+  await prisma.appUserStoreMembership.upsert({
+    where: {
+      appUserId_storeId: { appUserId: appUser.id, storeId: store.id }
+    },
+    update: {},
+    create: {
+      appUserId: appUser.id,
+      storeId: store.id,
+      role: "owner"
+    }
+  });
+
   const sessionToken = await signAppSession({
-    sub: user.id,
-    email: user.email,
+    sub: appUser.id,
+    email: appUser.email,
+    name: appUser.name || undefined,
     provider: "shopify"
   });
 

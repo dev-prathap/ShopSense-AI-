@@ -37,6 +37,7 @@ export default function OnboardingConnectPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [shop, setShop] = useState("");
   const [error, setError] = useState("");
+  const [recovering, setRecovering] = useState(false);
 
   useEffect(() => {
     const oauthError = searchParams.get("error");
@@ -45,6 +46,43 @@ export default function OnboardingConnectPage() {
     } else if (oauthError === "invalid_signature") {
       setError("Security verification failed. Please try connecting again.");
     }
+  }, [searchParams]);
+
+  /**
+   * Inside the Shopify admin iframe the app is by definition already installed,
+   * so asking for the shop domain again is both redundant and fatal: submitting
+   * it runs OAuth, which ends at accounts.shopify.com with X-Frame-Options:
+   * deny, and the frame goes permanently blank. Recover through token exchange
+   * (/shopify/auth) instead, which needs no redirect out of the iframe at all.
+   */
+  useEffect(() => {
+    if (typeof window === "undefined" || window.top === window.self) {
+      return;
+    }
+
+    setRecovering(true);
+    let cancelled = false;
+
+    (async () => {
+      // App Bridge loads synchronously in <head>, so window.shopify is normally
+      // ready immediately. Poll briefly as a safety net for slow init.
+      for (let i = 0; i < 20 && !cancelled; i++) {
+        const shopDomain =
+          searchParams.get("shop") || (window as any).shopify?.config?.shop;
+        if (shopDomain) {
+          window.location.href = `/shopify/auth?shop=${encodeURIComponent(shopDomain)}`;
+          return;
+        }
+        await new Promise((r) => setTimeout(r, 300));
+      }
+      // Couldn't identify the shop — fall back to the manual form, which submits
+      // through the top window rather than the iframe.
+      if (!cancelled) setRecovering(false);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [searchParams]);
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
@@ -70,8 +108,32 @@ export default function OnboardingConnectPage() {
     }
 
     setIsLoading(true);
-    window.location.href = `/api/shopify/install?shop=${encodeURIComponent(normalized)}`;
+    // OAuth terminates at accounts.shopify.com, which sets X-Frame-Options:
+    // deny — it can never render inside the Shopify admin iframe. Always drive
+    // the top window. The URL must be absolute: window.top resolves relative
+    // paths against admin.shopify.com, not against this app's origin.
+    const installUrl = new URL(
+      `/api/shopify/install?shop=${encodeURIComponent(normalized)}`,
+      window.location.origin
+    ).toString();
+    (window.top ?? window).location.href = installUrl;
   };
+
+  if (recovering) {
+    return (
+      <OnboardingShell>
+        <div className="flex flex-col items-center justify-center gap-4 py-24">
+          <div className="h-9 w-9 rounded-[10px] bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-600/25">
+            <Sparkles className="text-white" size={16} fill="currentColor" />
+          </div>
+          <Loader2 className="animate-spin text-slate-300" size={28} />
+          <p className="text-[13px] font-bold text-slate-400 tracking-tight">
+            Connecting to Shopify...
+          </p>
+        </div>
+      </OnboardingShell>
+    );
+  }
 
   return (
     <OnboardingShell>
