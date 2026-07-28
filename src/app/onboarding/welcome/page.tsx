@@ -100,22 +100,23 @@ export default function OnboardingWelcomePage() {
               ))}
             </div>
 
-            {/* Trust row */}
+            {/*
+              Trust row — setup facts only. This previously showed "450+ stores
+              live" beside three merchant portraits pulled live from
+              i.pravatar.cc, a random-face generator. Neither the count nor the
+              faces were real, and unsubstantiated claims are their own App
+              Store rejection reason, separate from anything functional.
+            */}
             <div className="flex items-center justify-center gap-5 mb-7">
               <div className="flex items-center gap-1.5">
                 <Clock size={13} className="text-slate-400" />
-                <span className="text-[12px] font-bold text-slate-400">~5 minutes</span>
+                <span className="text-[12px] font-bold text-slate-400">~5 minutes to set up</span>
               </div>
               <div className="w-px h-4 bg-slate-200" />
-              <div className="flex -space-x-1.5">
-                {[1, 2, 3].map(i => (
-                  <img key={i} src={`https://i.pravatar.cc/100?u=${i + 20}`}
-                    className="h-6 w-6 rounded-full border-2 border-white shadow-sm" alt="" />
-                ))}
+              <div className="flex items-center gap-1.5">
+                <Zap size={13} className="text-slate-400" />
+                <span className="text-[12px] font-bold text-slate-400">Syncs your live catalog</span>
               </div>
-              <span className="text-[12px] font-bold text-slate-400">
-                <span className="text-slate-700">450+</span> stores live
-              </span>
             </div>
 
             {/* CTA */}

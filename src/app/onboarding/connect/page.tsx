@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, ArrowLeft, Sparkles, ArrowRight, AlertCircle, Package, FileText, MessageSquare, ShieldCheck } from "lucide-react";
+import { Loader2, ArrowLeft, Sparkles, ArrowRight, AlertCircle, Package, FileText, MessageSquare, Code } from "lucide-react";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { OnboardingProgress } from "@/components/onboarding/OnboardingProgress";
 
@@ -24,11 +24,20 @@ function normalizeShopDomain(raw: string): { normalized: string; valid: boolean 
   return { normalized: val, valid };
 }
 
+/**
+ * These describe what Neryn actually does with the access it is granted. The
+ * fourth item used to read "Read-only access", under a line promising Neryn
+ * never writes to the store — untrue on both counts: the app installs a script
+ * tag (a write), and shopify.app.toml requests write scopes for products,
+ * product listings, orders, customers and cart transforms. Telling a merchant
+ * the opposite on the consent screen is a misrepresentation of what they are
+ * approving, and the kind of thing App Store review treats seriously.
+ */
 const PERMISSIONS = [
   { icon: <Package size={13} />, label: "Products & Variants" },
   { icon: <FileText size={13} />, label: "Store Policies" },
   { icon: <MessageSquare size={13} />, label: "Order Status" },
-  { icon: <ShieldCheck size={13} />, label: "Read-only access" },
+  { icon: <Code size={13} />, label: "Storefront widget script" },
 ];
 
 export default function OnboardingConnectPage() {
@@ -229,7 +238,9 @@ export default function OnboardingConnectPage() {
                 ))}
               </div>
               <p className="text-[11px] text-slate-400 font-medium mt-3 pt-3 border-t border-slate-200">
-                Neryn never writes to your store. Only read permissions are requested.
+                Neryn reads your catalog, policies and order status to answer shopper
+                questions. The only thing it writes is the script tag that renders the
+                chat widget on your storefront.
               </p>
             </div>
 
