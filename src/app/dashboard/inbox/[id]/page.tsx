@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { validateStoreAccess } from "@/lib/auth/store-access";
+import { checkStoreAccess, validateStoreAccess } from "@/lib/auth/store-access";
 import { prisma } from "@/lib/db/prisma";
 import { notFound, redirect } from "next/navigation";
 import { AppShell } from "@/components/app/AppShell";
@@ -11,6 +11,14 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 
+/**
+ * These actions are reachable as plain POST endpoints, independently of the
+ * page that renders their forms — the validateStoreAccess call below guards the
+ * render, not the submission. Both ids arrive from the caller, so each action
+ * has to establish that the caller holds the store *and* that the conversation
+ * belongs to it; checking only the store would let someone pair their own
+ * storeId with another merchant's conversationId.
+ */
 async function merchantReply(formData: FormData) {
   "use server";
   const conversationId = String(formData.get("conversationId"));
@@ -18,6 +26,13 @@ async function merchantReply(formData: FormData) {
   const content = String(formData.get("content")).trim();
 
   if (!content) return;
+  if (!(await checkStoreAccess(storeId))) return;
+
+  const conversation = await prisma.conversation.findFirst({
+    where: { id: conversationId, storeId },
+    select: { id: true }
+  });
+  if (!conversation) return;
 
   await prisma.message.create({
     data: {
@@ -37,8 +52,12 @@ async function resolveConversation(formData: FormData) {
   const conversationId = String(formData.get("conversationId"));
   const storeId = String(formData.get("storeId"));
 
-  await prisma.conversation.update({
-    where: { id: conversationId },
+  if (!(await checkStoreAccess(storeId))) return;
+
+  // updateMany so storeId stays in the where clause — update() would only
+  // accept the unique id and drop the ownership constraint.
+  await prisma.conversation.updateMany({
+    where: { id: conversationId, storeId },
     data: { status: "RESOLVED", resolvedAt: new Date() }
   });
 

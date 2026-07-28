@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { readAppSessionFromServerComponent } from "@/lib/auth/session";
+import { checkStoreAccess } from "@/lib/auth/store-access";
 import { prisma } from "@/lib/db/prisma";
 import { Button } from "@/components/ui/button";
 import { KnowledgeSetup } from "@/components/onboarding/KnowledgeSetup";
@@ -12,11 +13,19 @@ import { ActionPanel } from "@/components/app/ActionPanel";
 import { StatusPill } from "@/components/app/StatusPill";
 import { OnboardingState } from "@/lib/ui/contracts";
 
+/**
+ * Reachable as a plain POST endpoint — the membership lookup in the page
+ * component guards the render, not this submission, and storeId arrives from
+ * the caller.
+ */
 async function completeQuickOnboarding(formData: FormData) {
   "use server";
 
   const storeId = String(formData.get("storeId") || "");
   if (!storeId) {
+    redirect("/dashboard/connect");
+  }
+  if (!(await checkStoreAccess(storeId))) {
     redirect("/dashboard/connect");
   }
 

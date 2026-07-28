@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { validateStoreAccess } from "@/lib/auth/store-access";
+import { checkStoreAccess, validateStoreAccess } from "@/lib/auth/store-access";
 import { prisma } from "@/lib/db/prisma";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,11 +9,19 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { Textarea } from "@/components/ui/textarea";
 import { SyncButton } from "@/components/app/SyncButton";
 
+/**
+ * Reachable as a plain POST endpoint — the validateStoreAccess call in the page
+ * component guards the render, not this submission, and storeId arrives from
+ * the caller. Without its own check anyone could rewrite any store's config,
+ * including handoffWebhookUrl, which is where that store's conversation
+ * handoffs get delivered.
+ */
 async function saveSettings(formData: FormData) {
   "use server";
 
   const storeId = String(formData.get("storeId") || "");
   if (!storeId) return;
+  if (!(await checkStoreAccess(storeId))) return;
 
   await prisma.store.update({
     where: { id: storeId },

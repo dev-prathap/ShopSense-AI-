@@ -1,4 +1,4 @@
-import { validateStoreAccess } from "@/lib/auth/store-access";
+import { checkStoreAccess, validateStoreAccess } from "@/lib/auth/store-access";
 import { prisma } from "@/lib/db/prisma";
 import { AppShell } from "@/components/app/AppShell";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -8,11 +8,18 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { UserPlus, Mail, Shield, Trash2 } from "lucide-react";
 
+/**
+ * Still a stub, but guarded now so it cannot ship as an open endpoint: it is
+ * reachable as a plain POST independently of the page, and storeId comes from
+ * the caller. Whatever sends the real invitation goes after this check.
+ */
 async function inviteMember(formData: FormData) {
   "use server";
   const email = String(formData.get("email"));
   const role = String(formData.get("role"));
   const storeId = String(formData.get("storeId"));
+
+  if (!(await checkStoreAccess(storeId))) return;
 
   // In a real app, send email invitation here
   console.log(`Inviting ${email} as ${role} to store ${storeId}`);
