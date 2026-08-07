@@ -63,3 +63,57 @@ describe("theme app extension", () => {
     ).toBe(true);
   });
 });
+
+describe("no theme code injection is offered to merchants", () => {
+  /**
+   * App Store review, ref 108334: "Injecting code to theme editor is not
+   * allowed." The Configuration page used to print a <script> block under
+   * "Inject this script just before the closing </body> tag of your theme",
+   * and the reviewer pasted it into theme.liquid. Nothing in the merchant UI
+   * should ask for that again.
+   */
+  const merchantUi = ["src/app/dashboard", "src/app/onboarding", "src/components/app"];
+
+  function filesUnder(dir: string): string[] {
+    const abs = path.join(root, dir);
+    if (!fs.existsSync(abs)) return [];
+    return fs.readdirSync(abs, { withFileTypes: true }).flatMap((e) => {
+      const full = path.join(dir, e.name);
+      if (e.isDirectory()) return filesUnder(full);
+      return /\.tsx?$/.test(e.name) ? [full] : [];
+    });
+  }
+
+  /**
+   * Comments are stripped first: what matters is what reaches the merchant, not
+   * what the code says about the copy it replaced. A note explaining why the
+   * snippet was removed should not read as the snippet still being there.
+   */
+  function stripComments(src: string): string {
+    return src
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/^\s*\/\/.*$/gm, "");
+  }
+
+  const sources = merchantUi
+    .flatMap(filesUnder)
+    .map((rel) => [rel, stripComments(read(rel))] as const);
+
+  it("scans the merchant-facing pages", () => {
+    expect(sources.length).toBeGreaterThan(5);
+  });
+
+  it("never tells a merchant to paste a script into their theme", () => {
+    const offenders = sources
+      .filter(([, src]) => /inject this script|closing\s*&lt;\/body&gt;|Copy Integration Code/i.test(src))
+      .map(([rel]) => rel);
+    expect(offenders).toEqual([]);
+  });
+
+  it("does not hand out a widget.js snippet", () => {
+    const offenders = sources
+      .filter(([, src]) => src.includes("/widget.js"))
+      .map(([rel]) => rel);
+    expect(offenders).toEqual([]);
+  });
+});

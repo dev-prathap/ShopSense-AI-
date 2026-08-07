@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { checkStoreAccess, validateStoreAccess } from "@/lib/auth/store-access";
+import { ThemeEmbedPanel } from "@/components/app/ThemeEmbedPanel";
 import { prisma } from "@/lib/db/prisma";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -40,17 +41,6 @@ async function saveSettings(formData: FormData) {
 export default async function SettingsPage({ searchParams }: { searchParams: { storeId?: string } }) {
   const { storeId } = await validateStoreAccess(searchParams.storeId);
   const store = await prisma.store.findUnique({ where: { id: storeId } });
-  const appHost = process.env.SHOPIFY_APP_URL || 
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
-  const snippet = `<script>
-window.__AI_SALES_AGENT__ = {
-  storeId: "${storeId}",
-  host: "${appHost}",
-  position: "right"
-};
-</script>
-<script defer src="${appHost}/widget.js"></script>`;
-
   return (
     <AppShell
       storeId={storeId}
@@ -141,35 +131,12 @@ window.__AI_SALES_AGENT__ = {
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
                   </div>
-                  Live Integration
+                  Storefront Widget
                 </CardTitle>
-                <CardDescription className="text-slate-400 text-[13px] font-medium mt-2">Inject this script just before the closing <code className="text-white/80 bg-white/10 px-1.5 py-0.5 rounded-md text-[11px] font-mono">&lt;/body&gt;</code> tag of your theme.</CardDescription>
+                <CardDescription className="text-slate-400 text-[13px] font-medium mt-2">Neryn ships as an app embed. Switch it on in your theme and the assistant appears on your storefront.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6 p-8 relative z-10">
-                <div className="relative group/code">
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl blur opacity-0 group-hover/code:opacity-100 transition-opacity duration-500"></div>
-                    <div className="relative p-5 bg-[#141414] rounded-2xl border border-white/[0.08] shadow-inner overflow-x-auto custom-scrollbar">
-                         <div className="flex gap-1.5 mb-4">
-                            <div className="w-2.5 h-2.5 rounded-full bg-slate-700/50 border border-white/5" />
-                            <div className="w-2.5 h-2.5 rounded-full bg-slate-700/50 border border-white/5" />
-                            <div className="w-2.5 h-2.5 rounded-full bg-slate-700/50 border border-white/5" />
-                         </div>
-                       <pre className="whitespace-pre-wrap font-mono text-[11.5px] leading-[1.7] text-slate-300">
-                         <span className="text-pink-400">&lt;script&gt;</span>{`\n`}
-                         <span className="text-blue-300">window</span><span className="text-slate-400">.</span>__AI_SALES_AGENT__ <span className="text-slate-400">=</span> {`{\n`}
-                         {`  `}storeId<span className="text-slate-400">:</span> <span className="text-amber-300">"${storeId}"</span>,<span className="text-slate-500 italic"> // DO NOT MODIFY</span>{`\n`}
-                         {`  `}host<span className="text-slate-400">:</span> <span className="text-amber-300">"${appHost}"</span>,{`\n`}
-                         {`  `}position<span className="text-slate-400">:</span> <span className="text-amber-300">"right"</span>{`\n`}
-                         {`}`};{`\n`}
-                         <span className="text-pink-400">&lt;/script&gt;</span>{`\n`}
-                         <span className="text-pink-400">&lt;script</span> <span className="text-emerald-300">defer</span> <span className="text-emerald-300">src</span>=<span className="text-amber-300">"${appHost}/widget.js"</span><span className="text-pink-400">&gt;&lt;/script&gt;</span>
-                       </pre>
-                    </div>
-                </div>
-                
-                <Button variant="outline" className="w-full font-bold text-[13px] h-12 border-white/10 hover:bg-white/5 text-slate-300 rounded-xl transition-all hover:border-white/20 hover:text-white">
-                    Copy Integration Code
-                </Button>
+                <ThemeEmbedPanel shopDomain={store?.shopDomain ?? ""} />
                 
                 <div className="mt-8 pt-6 border-t border-white/[0.05]">
                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3">Catalog Management</p>
