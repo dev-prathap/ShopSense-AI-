@@ -6,7 +6,6 @@ import { ensureShopifyWebhooks } from "@/lib/shopify/webhooks";
 import { syncCatalog } from "@/lib/shopify/sync";
 import { fetchKnowledgeSources, publishKnowledgeSources, summarizeKnowledgeSources } from "@/lib/knowledge/service";
 import { sendEmail, generateGdprDataRequestEmail } from "@/lib/email/service";
-import { ensureShopifyScriptTag } from "@/lib/shopify/client";
 
 export type RetryJobType =
   | "ENSURE_WEBHOOKS"
@@ -15,8 +14,7 @@ export type RetryJobType =
   | "FETCH_KNOWLEDGE"
   | "SUMMARIZE_KNOWLEDGE"
   | "PUBLISH_KNOWLEDGE"
-  | "GDPR_DATA_REQUEST"
-  | "INSTALL_SCRIPT_TAG";
+  | "GDPR_DATA_REQUEST";
 
 export function computeBackoffSeconds(attempts: number): number {
   return Math.min(900, Math.pow(2, attempts) * 30);
@@ -124,10 +122,6 @@ async function runJob(job: {
       if (!out.ok) {
         throw new Error(out.reason || "summarize_knowledge_failed");
       }
-    }
-
-    if (job.type === "INSTALL_SCRIPT_TAG") {
-      await ensureShopifyScriptTag(store.shopDomain, store.accessToken, store.id);
     }
 
     if (job.type === "GDPR_DATA_REQUEST") {

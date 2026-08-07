@@ -79,7 +79,6 @@ export async function POST(req: NextRequest) {
     const { enqueueRetryJob } = await import("@/lib/jobs/queue");
     await enqueueRetryJob({ storeId: store.id, type: "ENSURE_WEBHOOKS", payload: { source: "token_exchange" } });
     await enqueueRetryJob({ storeId: store.id, type: "SYNC_CATALOG", payload: { source: "token_exchange" } });
-    await enqueueRetryJob({ storeId: store.id, type: "INSTALL_SCRIPT_TAG", payload: { source: "token_exchange" } });
   }
 
   // Find or create user for this Shopify session. Shopify session token claims include

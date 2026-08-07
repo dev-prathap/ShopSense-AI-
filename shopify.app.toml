@@ -8,23 +8,26 @@ embedded = true
 # Every scope here is justified by a call in the codebase — App Store review
 # asks what each one is for, and a merchant approves this list verbatim.
 #
-#   read_products      products/variants/collections queries in lib/shopify/sync.ts,
-#                      plus the PRODUCTS_CREATE/UPDATE/DELETE webhooks
-#   read_inventory     variant inventoryItem levels in lib/shopify/sync.ts,
-#                      plus the INVENTORY_LEVELS_UPDATE webhook
-#   read_orders        orders/fulfillments/trackingInfo in lib/shopify/client.ts
-#                      (order status lookups), plus the ORDERS_* webhooks
-#   read_customers     the CUSTOMERS_CREATE/UPDATE webhooks
-#   read_script_tags   checking for an existing widget script before installing
-#   write_script_tags  scriptTagCreate/scriptTagDelete — installs and removes the
-#                      storefront chat widget. The only write the app performs.
+#   read_products    products/variants/collections queries in lib/shopify/sync.ts,
+#                    plus the PRODUCTS_CREATE/UPDATE/DELETE webhooks
+#   read_inventory   variant inventoryItem levels in lib/shopify/sync.ts,
+#                    plus the INVENTORY_LEVELS_UPDATE webhook
+#   read_orders      orders/fulfillments/trackingInfo in lib/shopify/client.ts
+#                    (order status lookups), plus the ORDERS_* webhooks
+#   read_customers   the CUSTOMERS_CREATE/UPDATE webhooks
+#
+# Neryn requests no write access at all. The storefront widget used to need
+# write_script_tags to install itself; it now ships as the theme app extension
+# in extensions/neryn-widget and the merchant enables it from their theme, so
+# the app writes nothing to the store.
 #
 # Removed 2026-07-29 because nothing in src/ used them: write_products,
 # write_product_listings, write_orders, write_customers, write_cart_transforms,
 # read_product_listings, read_cart_transforms, read_customer_events, and the
 # three unauthenticated_read_* Storefront scopes (the widget reads the synced
 # catalog from this app's own database, never the Storefront API).
-scopes = "read_products,read_inventory,read_orders,read_customers,read_script_tags,write_script_tags"
+# Removed 2026-08-07 with the ScriptTag itself: read_script_tags, write_script_tags.
+scopes = "read_products,read_inventory,read_orders,read_customers"
 
 [auth]
 redirect_urls = [

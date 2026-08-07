@@ -55,13 +55,17 @@ describe("requested Shopify scopes", () => {
     expect(envExampleScopes).toEqual(tomlScopes);
   });
 
-  it("requests write access only for script tags", () => {
-    // The app's only Admin API writes are scriptTagCreate/scriptTagDelete.
-    // A new write scope here means either new write code or an over-request —
-    // both worth a deliberate look, since merchants approve this list.
-    expect(tomlScopes.filter((s) => s.startsWith("write_"))).toEqual([
-      "write_script_tags"
-    ]);
+  it("requests no write access at all", () => {
+    // Neryn performs no Admin API writes. The storefront widget was the only
+    // thing that ever needed one, and it now ships as a theme app extension the
+    // merchant enables themselves. A write scope reappearing here means either
+    // new write code or an over-request — both worth a deliberate look, since
+    // merchants approve this list verbatim.
+    expect(tomlScopes.filter((s) => s.startsWith("write_"))).toEqual([]);
+  });
+
+  it("requests no script tag access, since the widget is a theme app extension", () => {
+    expect(tomlScopes.filter((s) => s.includes("script_tag"))).toEqual([]);
   });
 
   it("requests no Storefront (unauthenticated_*) scopes", () => {

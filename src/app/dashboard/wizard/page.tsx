@@ -16,12 +16,14 @@ import {
   MessageSquare,
   Package,
   FileText,
-  AlertCircle
+  AlertCircle,
+  ToggleRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { OnboardingProgress } from "@/components/onboarding/OnboardingProgress";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { completeWizard, updateWizardStep, getWizardStatus, activateTrial } from "./actions";
+import { openThemeEditor } from "@/lib/shopify/theme-extension";
 
 type Step = "SYNC" | "TONE" | "PREVIEW" | "BILLING" | "SUCCESS";
 
@@ -549,12 +551,20 @@ function WizardPageContent() {
                 </div>
               </motion.div>
 
+              {/*
+                This screen used to announce "Neryn is live on your storefront!"
+                with an "Agent Active" badge. It was not live: the widget is an
+                app embed, app embeds ship disabled, and Shopify gives apps no
+                way to switch one on for the merchant. Telling them setup was
+                finished is why a storefront could end up with no widget at all.
+              */}
               <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="space-y-2">
                 <h2 className="text-[30px] font-bold text-slate-900 tracking-tight leading-tight">
-                  Neryn is live on<br />your storefront!
+                  One switch left
                 </h2>
-                <p className="text-slate-500 font-medium text-[15px] leading-relaxed max-w-[320px] mx-auto">
-                  Your AI sales agent is synced, trained, and ready to convert shoppers — 24/7.
+                <p className="text-slate-500 font-medium text-[15px] leading-relaxed max-w-[340px] mx-auto">
+                  Neryn is synced and trained. Turn on the app embed in your theme and
+                  the assistant appears on your storefront.
                 </p>
               </motion.div>
 
@@ -563,7 +573,6 @@ function WizardPageContent() {
                 {[
                   { icon: <Package size={12} />, text: "Catalog Synced" },
                   { icon: <Sparkles size={12} />, text: `${selectedTone} Persona` },
-                  { icon: <Zap size={12} />, text: "Agent Active" },
                   { icon: <ShieldCheck size={12} />, text: "Trial Activated" },
                 ].map(item => (
                   <div key={item.text} className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 rounded-full text-[11px] font-bold text-slate-600">
@@ -573,14 +582,28 @@ function WizardPageContent() {
               </motion.div>
 
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="space-y-3">
-                <Button onClick={handleFinish} disabled={isFinishing}
-                  className="w-full h-14 text-base font-bold rounded-2xl bg-slate-900 hover:bg-black text-white shadow-xl shadow-slate-900/10">
+                <Button
+                  onClick={() => store && openThemeEditor(store.shopDomain)}
+                  disabled={!store}
+                  className="w-full h-14 text-base font-bold rounded-2xl bg-slate-900 hover:bg-black text-white shadow-xl shadow-slate-900/10"
+                >
+                  <span className="flex items-center gap-2">
+                    <ToggleRight size={18} /> Turn on the storefront widget
+                  </span>
+                </Button>
+                <p className="text-[12px] text-slate-500 font-medium leading-relaxed max-w-[340px] mx-auto">
+                  Opens your theme editor on <b>App embeds</b>. Switch on
+                  <b> Neryn AI Sales Agent</b>, then hit Save.
+                </p>
+
+                <Button onClick={handleFinish} disabled={isFinishing} variant="ghost"
+                  className="w-full h-12 text-[13px] font-bold rounded-2xl text-slate-500 hover:text-slate-900">
                   {isFinishing
-                    ? <span className="flex items-center gap-2"><Loader2 className="h-5 w-5 animate-spin" /> Opening your dashboard...</span>
-                    : <span className="flex items-center gap-2">Enter Neryn Dashboard <ArrowRight size={16} /></span>}
+                    ? <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Opening your dashboard...</span>
+                    : <span className="flex items-center gap-2">I&apos;ll do it later — go to dashboard <ArrowRight size={15} /></span>}
                 </Button>
                 <p className="text-[12px] text-slate-400 font-medium">
-                  Your 7-day trial has started. We'll remind you before it ends.
+                  Your 7-day trial has started. We&apos;ll remind you before it ends.
                 </p>
               </motion.div>
             </div>

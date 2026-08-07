@@ -140,18 +140,9 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  // 4. Automate Chatbot Installation via ScriptTag
-  const { ensureShopifyScriptTag } = await import("@/lib/shopify/client");
-  try {
-    await ensureShopifyScriptTag(store.shopDomain, store.accessToken, store.id);
-  } catch (error) {
-    await enqueueRetryJob({
-      storeId: store.id,
-      type: "INSTALL_SCRIPT_TAG",
-      payload: { source: "oauth_callback" },
-      errorMessage: error instanceof Error ? error.message : "install_script_tag_failed"
-    });
-  }
+  // The storefront widget is no longer installed from here. It ships as a theme
+  // app extension the merchant switches on in their theme editor — App Store
+  // review does not allow an app to inject code into a theme.
 
   const redirect = new URL("/dashboard/wizard", process.env.SHOPIFY_APP_URL);
   redirect.searchParams.set("storeId", store.id);

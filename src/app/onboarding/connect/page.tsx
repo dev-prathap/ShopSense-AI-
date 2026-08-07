@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, ArrowLeft, Sparkles, ArrowRight, AlertCircle, Package, FileText, MessageSquare, Code } from "lucide-react";
+import { Loader2, ArrowLeft, Sparkles, ArrowRight, AlertCircle, Package, Layers, MessageSquare, Users } from "lucide-react";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { OnboardingProgress } from "@/components/onboarding/OnboardingProgress";
 
@@ -25,19 +25,20 @@ function normalizeShopDomain(raw: string): { normalized: string; valid: boolean 
 }
 
 /**
- * These describe what Neryn actually does with the access it is granted. The
- * fourth item used to read "Read-only access", under a line promising Neryn
- * never writes to the store — untrue on both counts: the app installs a script
- * tag (a write), and shopify.app.toml requests write scopes for products,
- * product listings, orders, customers and cart transforms. Telling a merchant
- * the opposite on the consent screen is a misrepresentation of what they are
- * approving, and the kind of thing App Store review treats seriously.
+ * One entry per scope in shopify.app.toml, so this panel matches what Shopify
+ * asks the merchant to approve on the next screen.
+ *
+ * The read-only claim below is now literally true. It was not before: the app
+ * requested write scopes for products, orders, customers and cart transforms,
+ * and installed a script tag on the storefront. The write scopes were dropped
+ * as unused, and the widget became a theme app extension the merchant enables
+ * themselves — so nothing here writes to the store any more.
  */
 const PERMISSIONS = [
   { icon: <Package size={13} />, label: "Products & Variants" },
-  { icon: <FileText size={13} />, label: "Store Policies" },
+  { icon: <Layers size={13} />, label: "Inventory Levels" },
   { icon: <MessageSquare size={13} />, label: "Order Status" },
-  { icon: <Code size={13} />, label: "Storefront widget script" },
+  { icon: <Users size={13} />, label: "Customer Records" },
 ];
 
 export default function OnboardingConnectPage() {
@@ -238,9 +239,8 @@ export default function OnboardingConnectPage() {
                 ))}
               </div>
               <p className="text-[11px] text-slate-400 font-medium mt-3 pt-3 border-t border-slate-200">
-                Neryn reads your catalog, policies and order status to answer shopper
-                questions. The only thing it writes is the script tag that renders the
-                chat widget on your storefront.
+                Read-only. Neryn never writes to your store — the storefront chat
+                widget is a theme app extension you switch on yourself.
               </p>
             </div>
 

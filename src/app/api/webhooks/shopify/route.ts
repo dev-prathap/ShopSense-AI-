@@ -6,7 +6,6 @@ import { verifyShopifyHmac } from "@/lib/security/hmac";
 import { syncCatalog } from "@/lib/shopify/sync";
 import { enqueueRetryJob } from "@/lib/jobs/queue";
 import { applyInventoryDelta } from "@/lib/shopify/inventory";
-import { deleteShopifyScriptTag } from "@/lib/shopify/client";
 
 /**
  * Shape of the `app_subscriptions/update` webhook payload. Shopify wraps it
@@ -142,10 +141,9 @@ export async function POST(req: NextRequest) {
       .updateMany({ where: { storeId: store.id }, data: { active: false } })
       .catch((err) => console.error("[Shopify] Subscription deactivate on uninstall failed:", err));
 
-    // Remove widget script tag from storefront
-    await deleteShopifyScriptTag(store.shopDomain, store.accessToken, store.id).catch((err) =>
-      console.error("[Shopify] Script tag cleanup failed on uninstall:", err)
-    );
+    // Nothing to clean off the storefront: the widget ships as a theme app
+    // extension, so uninstalling the app removes it with the app. The app embed
+    // setting is the merchant's, and Shopify tears it down on their behalf.
   }
 
   if (topic === "app_subscriptions/update") {

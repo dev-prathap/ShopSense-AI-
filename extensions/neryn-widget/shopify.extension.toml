@@ -1,0 +1,15 @@
+# Theme app extension for the Neryn storefront chat widget.
+#
+# This replaces the ScriptTag the app used to create on install. App Store
+# review (ref 108334) rejected that approach outright: "The app must use theme
+# app extension. Injecting code to theme editor is not allowed."
+#
+# Everything the widget needs on the storefront now ships inside this extension
+# and is served from Shopify's CDN. The app no longer writes to the merchant's
+# theme — or to anything else in their store.
+api_version = "2025-01"
+
+[[extensions]]
+type = "theme"
+name = "Neryn AI Sales Agent"
+handle = "neryn-widget"

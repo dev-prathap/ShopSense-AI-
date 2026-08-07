@@ -32,7 +32,7 @@ export function shopifyInstallUrl(shop: string, state: string): string {
   // webhooks.
   const scopes =
     process.env.SHOPIFY_SCOPES ||
-    "read_products,read_inventory,read_orders,read_customers,read_script_tags,write_script_tags";
+    "read_products,read_inventory,read_orders,read_customers";
   const redirectUri = `${process.env.SHOPIFY_APP_URL}/api/shopify/callback`;
   const apiKey = process.env.SHOPIFY_API_KEY;
 
@@ -113,99 +113,4 @@ export async function fetchShopifyOrderStatusByNumber(input: {
   );
 
   return data.orders.edges[0]?.node || null;
-}
-/**
- * Build the widget script-tag URL for a given store. Pure helper so
- * create/delete share the same source of truth.
- */
-function widgetScriptUrl(storeId: string): string {
-  return `${process.env.SHOPIFY_APP_URL}/widget.js?storeId=${storeId}`;
-}
-
-/**
- * Install the Neryn storefront widget as a ScriptTag on the merchant's theme.
- * Uses GraphQL Admin API (BFS 2025 requirement — REST /admin/api/.../script_tags.json
- * is deprecated for new apps). Idempotent: no-ops if a tag with the same src exists.
- *
- * NOTE: `ScriptTag` is scheduled for deprecation in a future API version. Long-term
- * migration target is a Theme App Extension (app embed block). Track as follow-up.
- */
-export async function ensureShopifyScriptTag(shopDomain: string, accessToken: string, storeId: string) {
-  const src = widgetScriptUrl(storeId);
-
-  try {
-    const existing = await shopifyGraphQL<{
-      scriptTags: { edges: Array<{ node: { id: string; src: string } }> };
-    }>(
-      shopDomain,
-      accessToken,
-      `query ExistingScriptTags { scriptTags(first: 100) { edges { node { id src } } } }`
-    );
-
-    if (existing.scriptTags.edges.some((e) => e.node.src === src)) {
-      return;
-    }
-
-    const created = await shopifyGraphQL<{
-      scriptTagCreate: {
-        userErrors: Array<{ field: string[]; message: string }>;
-        scriptTag: { id: string } | null;
-      };
-    }>(
-      shopDomain,
-      accessToken,
-      `mutation CreateScriptTag($input: ScriptTagInput!) {
-        scriptTagCreate(input: $input) {
-          userErrors { field message }
-          scriptTag { id }
-        }
-      }`,
-      { input: { src, displayScope: "ALL_PAGES", cache: false } }
-    );
-
-    if (created.scriptTagCreate.userErrors.length > 0) {
-      console.error(`[Shopify] ScriptTag create userErrors:`, created.scriptTagCreate.userErrors);
-    }
-  } catch (error) {
-    console.error("[Shopify] ensureShopifyScriptTag error:", error instanceof Error ? error.message : error);
-  }
-}
-
-/**
- * Delete the Neryn widget ScriptTag for a given store. Called on app/uninstalled
- * to leave the storefront clean. Best-effort: logs and swallows errors because
- * access may already be revoked at this point.
- */
-export async function deleteShopifyScriptTag(shopDomain: string, accessToken: string, storeId: string) {
-  const src = widgetScriptUrl(storeId);
-
-  try {
-    const existing = await shopifyGraphQL<{
-      scriptTags: { edges: Array<{ node: { id: string; src: string } }> };
-    }>(
-      shopDomain,
-      accessToken,
-      `query ExistingScriptTags { scriptTags(first: 100) { edges { node { id src } } } }`
-    );
-
-    const target = existing.scriptTags.edges.find((e) => e.node.src === src);
-    if (!target) return;
-
-    await shopifyGraphQL<{
-      scriptTagDelete: { userErrors: Array<{ field: string[]; message: string }>; deletedScriptTagId: string | null };
-    }>(
-      shopDomain,
-      accessToken,
-      `mutation DeleteScriptTag($id: ID!) {
-        scriptTagDelete(id: $id) {
-          userErrors { field message }
-          deletedScriptTagId
-        }
-      }`,
-      { id: target.node.id }
-    );
-  } catch (error) {
-    // Uninstall may already have revoked the token — don't crash the webhook handler.
-    console.warn("[Shopify] deleteShopifyScriptTag best-effort failed:", error instanceof Error ? error.message : error);
-  }
 }

@@ -1,0 +1,55 @@
+{% comment %}
+  Neryn AI Sales Agent — app embed block.
+
+  App embeds render once per page outside the theme's section tree, which is
+  what a floating chat launcher needs. The merchant turns this on in
+  Online Store > Themes > Customize > App embeds; the app links them straight
+  there from the setup wizard.
+
+  The storefront never receives an app-injected script. The loader below is
+  served from Shopify's CDN as part of this extension, and the only thing the
+  theme passes it is the shop domain plus the merchant's display settings —
+  the app resolves everything else itself.
+{% endcomment %}
+
+<script>
+  window.__NERYN__ = {
+    shop: {{ shop.permanent_domain | json }},
+    host: {{ block.settings.app_host | default: 'https://neryn.pro' | json }},
+    position: {{ block.settings.position | default: 'right' | json }},
+    primaryColor: {{ block.settings.primary_color | default: '#000000' | json }}
+  };
+</script>
+<script src="{{ 'neryn-widget.js' | asset_url }}" defer></script>
+
+{% schema %}
+{
+  "name": "Neryn AI Sales Agent",
+  "target": "body",
+  "settings": [
+    {
+      "type": "select",
+      "id": "position",
+      "label": "Launcher position",
+      "options": [
+        { "value": "right", "label": "Bottom right" },
+        { "value": "left", "label": "Bottom left" }
+      ],
+      "default": "right"
+    },
+    {
+      "type": "color",
+      "id": "primary_color",
+      "label": "Launcher colour",
+      "default": "#000000"
+    },
+    {
+      "type": "text",
+      "id": "app_host",
+      "label": "Neryn host",
+      "info": "Leave blank unless Neryn support asks you to change it.",
+      "default": "https://neryn.pro"
+    }
+  ]
+}
+{% endschema %}

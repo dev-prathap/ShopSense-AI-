@@ -7,6 +7,7 @@ import { AppShell } from "@/components/app/AppShell";
 import { PageHeader } from "@/components/app/PageHeader";
 import { KpiCard } from "@/components/app/KpiCard";
 import { EmptyState } from "@/components/app/EmptyState";
+import { WidgetEmbedReminder } from "@/components/app/WidgetEmbedReminder";
 
 function formatWhen(value: Date | null, fallback: string) {
   if (!value) return fallback;
@@ -108,6 +109,8 @@ export default async function DashboardPage({
       ]}
     >
       <div className="flex flex-col gap-7">
+        <WidgetEmbedReminder shopDomain={storeData.shopDomain} />
+
         <PageHeader
           title="Performance Insights"
           subtitle="Real-time conversion metrics and AI training health."
